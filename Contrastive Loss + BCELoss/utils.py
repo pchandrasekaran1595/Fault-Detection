@@ -1,3 +1,7 @@
+"""
+    Constants and Utility Functions
+"""
+
 import os
 import cv2
 import torch
@@ -5,13 +9,16 @@ from torchvision import transforms, ops
 from termcolor import colored
 os.system("color")
 
+# Self Aware Dataset Directory
 DATASET_PATH = os.path.join(os.getcwd(), "Datasets")
 if not os.path.exists(DATASET_PATH):
     os.makedirs(DATASET_PATH)
 # DATASET_PATH = os.path.join(os.path.dirname(__file__), "Datasets")
 
+# Capture object Attributes
 CAM_WIDTH, CAM_HEIGHT, FPS, DELAY = 640, 360, 30, 5
 
+# DL Model Constants
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 ROI_TRANSFORM = transforms.Compose([transforms.ToTensor(), ])

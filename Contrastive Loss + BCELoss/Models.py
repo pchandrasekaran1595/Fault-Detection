@@ -1,3 +1,7 @@
+"""
+    Models Used
+"""
+
 import torch
 from torchvision import models
 from torch import nn, optim
@@ -8,7 +12,7 @@ import utils as u
 # Region-of-Interest Extractor (Object Detector)
 class RoIExtractor(nn.Module):
     def __init__(self):
-        nn.Module.__init__(self)
+        super(RoIExtractor, self).__init__()
 
         self.model = models.detection.fasterrcnn_mobilenet_v3_large_320_fpn(pretrained=True, progress=True)
 
@@ -20,10 +24,10 @@ class RoIExtractor(nn.Module):
 # VGG16 Model; Slice out the final 2 blocks and Average Pool the 512x7x7 features down to 512x2x2 and then Flatten
 class FeatureExtractor(nn.Module):
     def __init__(self):
-        nn.Module.__init__(self)
+        super(FeatureExtractor, self).__init__()
         
         self.model = models.vgg16_bn(pretrained=True, progress=True)
-        self.model = nn.Sequential(*[*self.model.children()][:2])
+        self.model = nn.Sequential(*[*self.model.children()][:-2])
         self.model.add_module("Adaptive Avg Pool", nn.AdaptiveAvgPool2d(output_size=(2, 2)))
         self.model.add_module("Flatten", nn.Flatten())
 
@@ -32,9 +36,13 @@ class FeatureExtractor(nn.Module):
 
 # ******************************************************************************************************************** #
 
+"""
+    - Siamese Network Architecture (Input Layer --> Embedding Layer --> Similarity Predictor)
+    - Expects a pair of inputs during the training phase
+"""
 class SiameseNetwork(nn.Module):
     def __init__(self, IL=u.FEATURE_VECTOR_LENGTH, embed=None):
-        nn.Module.__init__(self)
+        super(SiameseNetwork, self).__init__()
 
         self.embedder = nn.Sequential()
         self.embedder.add_module("BN", nn.BatchNorm1d(num_features=IL, eps=1e-5))
@@ -73,6 +81,7 @@ fea_extractor.eval()
 
 # ******************************************************************************************************************** #
 
+# Setup the Siamese Netowrk
 def build_siamese_model(embed=None):
     if embed is not None:
         torch.manual_seed(u.SEED)

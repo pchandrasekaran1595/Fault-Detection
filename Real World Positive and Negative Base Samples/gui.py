@@ -35,6 +35,7 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=
     if anchor is not None:
         disp_frame = u.alpha_blend(anchor, disp_frame, 0.15)
 
+    # Resize + Center Crop (256x256 ---> 224x224)
     frame = u.preprocess(frame, change_color_space=False)
 
     # Perform Inference on current frame

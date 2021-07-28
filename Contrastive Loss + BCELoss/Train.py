@@ -1,3 +1,8 @@
+"""
+    Training Script
+"""
+
+
 import os
 import cv2
 import torch
@@ -13,8 +18,25 @@ from DatasetTemplates import SiameseDS
 
 # ******************************************************************************************************************** #
 
+class ContrastiveLoss(torch.nn.Module):
+    def __init__(self, margin=1.0):
+        super(ContrastiveLoss, self).__init__()
+        self.margin = margin
+    
+    def forward(self, x1, x2, y):
+        squared_distance = torch.sum(torch.pow(x1-x2, 2), dim=1)
+        sqrt_distance = torch.sqrt(squared_distance)
+        margin_distance = self.margin - sqrt_distance
+        sqrt_distance = torch.clamp(margin_distance, min=0.0)
+        
+        loss = (y*squared_distance) + ((1-y)*torch.pow(sqrt_distance, 2))
+        loss = torch.sum(loss, dim=0) / loss.shape[0]
+        return loss
+
+# ******************************************************************************************************************** #
+
 def fit_(model=None, optimizer=None, scheduler=None, epochs=None, early_stopping_patience=None,
-         trainloader=None, validloader=None, criterion=None, device=None,
+         trainloader=None, validloader=None, criterion1=None, criterion2=None, device=None,
          save_to_file=False, path=None, verbose=False):
 
     """
@@ -25,7 +47,8 @@ def fit_(model=None, optimizer=None, scheduler=None, epochs=None, early_stopping
         early_stopping_patience : Number of epochs of stagnated validation loss after which to stop the training
         trainloader             : Train Dataloader
         validloader             : Valid Dataloader
-        criterion               : Loss Function
+        criterion1              : Loss Function 1
+        criterion2              : Loss Function 1
         device                  : Device on which to run the training on
         save_to_file            : Flag that controls if verbose output should be save to a file
         path                    : Patch at which to save the model checkpoint
@@ -92,17 +115,17 @@ def fit_(model=None, optimizer=None, scheduler=None, epochs=None, early_stopping
                 with torch.set_grad_enabled(phase == "train"):
 
                     # Pass Siamese Input to the model and obtain the output
-                    output = model(X[:, 0, :], X[:, 1, :])
+                    output_1, output_2, output_3 = model(X[:, 0, :], X[:, 1, :])
 
                     # Calculate the loss
-                    loss = criterion(output, y)
+                    loss = criterion1(output_1, output_2, y).mean() + criterion2(output_3, y)
 
                     # Backward pass and update optimizer during training phase
                     if phase == "train":
                         loss.backward()
                         optimizer.step()
                 lossPerPass.append(loss.item())
-                accsPerPass.append(getAccuracy(output, y))
+                accsPerPass.append(getAccuracy(output_3, y))
             epochLoss[phase] = np.mean(np.array(lossPerPass))
             epochAccs[phase] = np.mean(np.array(accsPerPass))
         Losses.append(epochLoss)
@@ -233,7 +256,7 @@ def trainer(part_name=None, model=None, epochs=None, lr=None, wd=None, batch_siz
     # Fit the model
     L, A, _, _ = fit_(model=model, optimizer=optimizer, scheduler=None, epochs=epochs,
                       early_stopping_patience=early_stopping, trainloader=tr_data, validloader=va_data, 
-                      device=u.DEVICE, criterion=torch.nn.BCEWithLogitsLoss(),
+                      device=u.DEVICE, criterion1=ContrastiveLoss(), criterion2=torch.nn.BCEWithLogitsLoss(),
                       save_to_file=True, path=checkpoint_path, verbose=True)
 
     TL, VL, TA, VA = [], [], [], []

@@ -8,15 +8,16 @@ import gui
 
 import utils as u
 
+# ******************************************************************************************************************** #
 
 def main():
     u.breaker()
     u.myprint("\t   --- Application Start ---", color="green")
 
-    args = "--gui"
-    with_gui = False
+    args = "--nogui"
+    with_gui = True
     if args in sys.argv:
-        with_gui = True
+        with_gui = False
     
     if with_gui:
         gui.app()
@@ -27,6 +28,9 @@ def main():
     u.myprint("\t   --- Application End ---", color="green")
     u.breaker()
 
+# ******************************************************************************************************************** #
 
 if __name__ == "__main__":
     sys.exit(main() or 0)
+
+# ******************************************************************************************************************** #

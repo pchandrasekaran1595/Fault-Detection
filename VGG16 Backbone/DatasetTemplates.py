@@ -1,3 +1,7 @@
+"""
+    Dataset Templates used by the Application
+"""
+
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -10,7 +14,7 @@ class FEDS(Dataset):
     def __init__(self, X=None, transform=None):
         """
             X : Images
-            transform : transformations to be applied to the  images
+            transform : transformations to be applied to the images
         """
         self.transform = transform
         self.X = X

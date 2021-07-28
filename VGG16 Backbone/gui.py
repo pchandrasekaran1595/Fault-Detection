@@ -35,6 +35,7 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=
     if anchor is not None:
         disp_frame = u.alpha_blend(anchor, disp_frame, 0.15)
 
+    # Resize + Center Crop (256x256 ---> 224x224)
     frame = u.preprocess(frame, change_color_space=False)
 
     # Perform Inference on current frame
@@ -163,10 +164,13 @@ class VideoFrame(tk.Frame):
 
         # If VideoFrame is in Result Mode; Default is None
         if self.isResult:
+            # Load the Model
             self.model_path = os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Checkpoints"), "State.pt")
             self.model.load_state_dict(torch.load(self.model_path, map_location=u.DEVICE)["model_state_dict"])
             self.model.eval()
             self.model.to(u.DEVICE)
+
+            # Get the Reference Bounding Box Coordinates
             file = open(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Box.txt"), "r")
             self.data = file.read().split(",")
             file.close()
@@ -195,10 +199,15 @@ class VideoFrame(tk.Frame):
         ret, frame = self.V.get_frame()
 
         if not self.isResult:
+            # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
             frame = u.clahe_equ(frame)
             if ret:
-                # h, w, _ = frame.shape
-                # frame = cv2.rectangle(img=frame, pt1=(int(w/2) - 100, int(h/2) - 100), pt2=(int(w/2) + 100, int(h/2) + 100), color=(255, 255, 255), thickness=2)
+
+                # Obtain the bounding box coordinates
+                x1, y1, x2, y2 = u.get_box_coordinates(Models.roi_extractor, u.ROI_TRANSFORM, frame)
+
+                # Draw the bounding box on the frame
+                frame = u.process(frame, x1, y1, x2, y2)
 
                 # Convert image from np.ndarray format into tkinter canvas compatible format and update
                 self.image = ImageTk.PhotoImage(Image.fromarray(frame))
@@ -208,10 +217,12 @@ class VideoFrame(tk.Frame):
                 return
         else:
             if ret:
+                # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
                 frame = u.clahe_equ(frame)
 
                 # Process frame in during inference
-                frame = __help__(frame=frame, model=self.model, anchor=None,
+                frame = __help__(frame=frame, model=self.model, anchor=None, 
+                                 pt1=(self.data[0], self.data[1]), pt2=(self.data[2], self.data[3]),
                                  show_prob=False, fea_extractor=Models.fea_extractor)
 
                 # Convert image from np.ndarray format into tkinter canvas compatible format
@@ -379,6 +390,8 @@ class ButtonFrame(tk.Frame):
 
         # Read the current frame from the capture object
         ret, frame = self.VideoWidget.V.get_frame()
+
+        # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
         frame = u.clahe_equ(frame)
 
         # Save the frame and update counter
@@ -468,6 +481,8 @@ class ButtonFrame(tk.Frame):
         
         # Read the current frame from the capture object
         ret, frame = self.VideoWidget.V.get_frame()
+
+        # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
         frame = u.clahe_equ(frame)
 
         # Save the frame
@@ -480,6 +495,8 @@ class ButtonFrame(tk.Frame):
 
         # Read the current frame from the capture object
         ret, frame = self.VideoWidget.V.get_frame()
+
+        # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
         frame = u.clahe_equ(frame)
 
         # Save the frame
@@ -564,7 +581,7 @@ def app():
     # Initialize Siamese Network
     model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
 
-    # Start a ne application window
+    # Start a new application window
     setup(model=model)
     
     # Start
