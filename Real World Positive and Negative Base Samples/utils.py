@@ -24,6 +24,7 @@ SEED = 0
 RELIEF = 25
 FEATURE_VECTOR_LENGTH = 2048
 
+# GUI Color Schemes
 GUI_ORANGE = (255, 165, 0)
 GUI_RED    = (255, 0, 0)
 GUI_GREEN  = (0, 255, 0)
@@ -77,6 +78,11 @@ def normalize(x):
 
 # Extract the feature vector from a single image
 def get_single_image_features(model=None, transform=None, image=None):
+    """
+        model     : Pretrained Deep Learning Feature Extractor Model (Pytorch)
+        transform : Transform expected to be performed on the input
+        image     : Image File
+    """
     with torch.no_grad():
         features = model(transform(image).to(DEVICE).unsqueeze(dim=0))
     return normalize(features).detach().cpu().numpy()

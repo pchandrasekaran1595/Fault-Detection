@@ -2,4 +2,6 @@
 
 - This is to be used for testing
 
-- Used Contrastive Loss to try and seperate apart Samples
+- Assumes that the user can provide faulty and defective samples
+
+- Does not contain a CLI version

@@ -1,6 +1,7 @@
 """
     CLI Application
 """
+
 import sys
 from time import time
 

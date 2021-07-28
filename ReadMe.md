@@ -10,7 +10,7 @@
     3. output - Single neuron which after passing through a sigmoid gives a percent prediction.
 
 - Operations taking place during an application run:
-    1. Capture of an image from video a feed at the discretion of the user. An Object Detector is used to extract the approximate bounding box of the component within the frame. This bounding box is used in the Realtime Application to set a predefined area within the frame where the object can be placed.
+    1. Capture of an image from video a feed at the discretion of the user. An Object Detector is used to extract the approximate bounding box of the component within the frame. This bounding box is used in the Realtime Application to set a predefined area within the frame where the object can be placed. (Bounding Box Detection is not applicable for Real World Positive and Negative Base Samples)
     2. Creation of the Feature Vector Dataset.
         1. Define a pretrained model to use and cut off the final classification layer. (FeatureExtractors in Templates/Pytorch/VisionModels.py)
         2. Artificially increase dataset size by augmentation. 
@@ -18,10 +18,10 @@
     3. Load features saved in Step 2 and pass it through a Dataset creation pipeline making the data suitable for usage with a Siamese Network. Since pytorch is being used, also build the dataloaders.
     4. Train the model. At present, only limited hyperparameters are present and can be changed only from the source. However, end user can set:
         1. Number of Epochs (Default: 1000)
-        2. Number of Samples (Default: 15000)
+        2. Number of Samples (Default: 1000)
         3. Size of New Embeddings (Default: 2048)
-        4. Lower Confidence Bound (Default: 0.80)
-        5. Upper Confidence Bound (Default: 0.95)
+        4. Lower Confidence Bound (Default: 0.95)
+        5. Upper Confidence Bound (Default: 0.99)
         6. Device ID of capture Device (Default: 0)
         7. Early Stopping Epoch (Default: 50)
 
@@ -34,4 +34,5 @@
 
 ### Notes:
 - Cannot detect minute changes. (Issue ..??)
+- Changing background affects the system, unless image with that bakcground is included in the dataset.
 - Retraining may cause upper boud confidence to be reduced, but the system is able to reliably split into Faulty or Defective.

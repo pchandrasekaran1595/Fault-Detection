@@ -1,8 +1,19 @@
 import torch
 from torchvision import models
 from torch import nn, optim
-
 import utils as u
+
+# ******************************************************************************************************************** #
+
+# Region-of-Interest Extractor (Object Detector)
+class RoIExtractor(nn.Module):
+    def __init__(self):
+        nn.Module.__init__(self)
+
+        self.model = models.detection.fasterrcnn_mobilenet_v3_large_320_fpn(pretrained=True, progress=True)
+
+    def forward(self, x):
+        return self.model(x)
 
 # ******************************************************************************************************************** #
 
@@ -19,17 +30,6 @@ class FeatureExtractor(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-# ******************************************************************************************************************** #
-
-class RoIExtractor(nn.Module):
-    def __init__(self):
-        nn.Module.__init__(self)
-
-        self.model = models.detection.fasterrcnn_mobilenet_v3_large_320_fpn(pretrained=True, progress=True)
-
-    def forward(self, x):
-        return self.model(x)
-    
 # ******************************************************************************************************************** #
 
 class SiameseNetwork(nn.Module):
@@ -55,20 +55,21 @@ class SiameseNetwork(nn.Module):
         if x2 is not None:
             x1 = self.embedder(x1)
             x2 = self.embedder(x2)
-            x = torch.abs(x1 - x2)
-            x =  self.classifier(x)
+            x3 = self.classifier(torch.abs(x1 - x2))
+            return x1, x2, x3
         else:
             x = self.classifier(self.embedder(x1))
-        return x
+            return x
 
 # ******************************************************************************************************************** #
+
+roi_extractor = RoIExtractor()
+roi_extractor.to(u.DEVICE)
+roi_extractor.eval()
 
 fea_extractor = FeatureExtractor()
 fea_extractor.to(u.DEVICE)
 fea_extractor.eval()
-roi_extractor = RoIExtractor()
-roi_extractor.to(u.DEVICE)
-roi_extractor.eval()
 
 # ******************************************************************************************************************** #
 

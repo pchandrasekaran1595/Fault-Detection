@@ -5,6 +5,7 @@ import utils as u
 
 # ******************************************************************************************************************** #
 
+# Region-of-Interest Extractor (Object Detector)
 class RoIExtractor(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
@@ -16,12 +17,14 @@ class RoIExtractor(nn.Module):
 
 # ******************************************************************************************************************** #
 
+# ResNet50 Model; Slice out the final classification block then Flatten
 class FeatureExtractor(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
         
-        self.model = models.resnet50(pretrained=True, progress=True)
-        self.model = nn.Sequential(*[*self.model.children()][:-1])
+        self.model = models.vgg16_bn(pretrained=True, progress=True)
+        self.model = nn.Sequential(*[*self.model.children()][:2])
+        self.model.add_module("Adaptive Avg Pool", nn.AdaptiveAvgPool2d(output_size=(2, 2)))
         self.model.add_module("Flatten", nn.Flatten())
 
     def forward(self, x):
@@ -52,11 +55,11 @@ class SiameseNetwork(nn.Module):
         if x2 is not None:
             x1 = self.embedder(x1)
             x2 = self.embedder(x2)
-            x = torch.abs(x1 - x2)
-            x =  self.classifier(x)
+            x3 = self.classifier(torch.abs(x1 - x2))
+            return x1, x2, x3
         else:
             x = self.classifier(self.embedder(x1))
-        return x
+            return x
 
 # ******************************************************************************************************************** #
 
@@ -71,7 +74,6 @@ fea_extractor.eval()
 # ******************************************************************************************************************** #
 
 def build_siamese_model(embed=None):
-
     if embed is not None:
         torch.manual_seed(u.SEED)
         model = SiameseNetwork(embed=embed)

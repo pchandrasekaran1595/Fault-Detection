@@ -1,3 +1,7 @@
+"""
+    CLI Snapshot Capture
+"""
+
 import os
 import cv2
 import platform
@@ -11,6 +15,7 @@ import utils as u
 def capture_snapshot(device_id=0, part_name=None, roi_extractor=None):
     path = os.path.join(os.path.join(u.DATASET_PATH, part_name), "Positive")
 
+    # Setup Dataset Directory and Open .txt file to hold refernce bounding box coordinates
     if not os.path.exists(path):
         os.makedirs(path)
         file = open(os.path.join(os.path.join(u.DATASET_PATH, part_name), "Box.txt"), "w")
@@ -33,11 +38,18 @@ def capture_snapshot(device_id=0, part_name=None, roi_extractor=None):
     # Read data from capture object
     while cap.isOpened():
         _, frame = cap.read()
+
+        # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
         frame = u.clahe_equ(frame)
         d_frame = frame.copy()
         
+        # Obtain the bounding box coordinates
         x1, y1, x2, y2 = u.get_box_coordinates(roi_extractor, u.ROI_TRANSFORM, frame)
+
+        # Draw the bounding box on the frame
         d_frame = u.process(d_frame, x1, y1, x2, y2)
+
+        # Stack the original and bounding box frame
         d_frame = np.hstack((frame, d_frame))
 
         # Display the frame
@@ -55,6 +67,7 @@ def capture_snapshot(device_id=0, part_name=None, roi_extractor=None):
         if cv2.waitKey(u.DELAY) == ord("q"):
             break
     
+    # Close the .txt file
     file.close()
 
     # Release the capture object and destroy all windows

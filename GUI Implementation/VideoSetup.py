@@ -3,6 +3,12 @@ import platform
 
 class Video(object):
     def __init__(self, id=None, width=None, height=None, fps=None):
+        """
+            id     : Device ID of the capture object
+            width  : Width of the capture frame
+            height : Height of the capture frame
+            fps    : FPS of the capture object
+        """
         self.id = id
         self.width = width
         self.height = height
@@ -10,6 +16,9 @@ class Video(object):
         self.cap = None
     
     def start(self):
+        """
+            Initialize the capture object
+        """
         if platform.system() != 'Windows':
             self.cap = cv2.VideoCapture(self.id)
         else:
@@ -19,6 +28,9 @@ class Video(object):
         self.cap.set(cv2.CAP_PROP_FPS, self.fps)
     
     def get_frame(self):
+        """
+            Read a frame from the capture object
+        """
         if self.cap.isOpened():
             ret, frame = self.cap.read()
             if ret:
@@ -27,5 +39,8 @@ class Video(object):
                 return ret, None
 
     def stop(self):
+        """
+            Stop the capture object
+        """
         if self.cap.isOpened():
             self.cap.release()

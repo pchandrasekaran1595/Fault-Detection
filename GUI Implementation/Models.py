@@ -5,6 +5,7 @@ import utils as u
 
 # ******************************************************************************************************************** #
 
+# Region-of-Interest Extractor (Object Detector)
 class RoIExtractor(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
@@ -16,6 +17,7 @@ class RoIExtractor(nn.Module):
 
 # ******************************************************************************************************************** #
 
+# VGG16 Model; Slice out the final 2 blocks and Average Pool the 512x7x7 features down to 512x2x2 and then Flatten
 class FeatureExtractor(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
@@ -53,11 +55,11 @@ class SiameseNetwork(nn.Module):
         if x2 is not None:
             x1 = self.embedder(x1)
             x2 = self.embedder(x2)
-            x = torch.abs(x1 - x2)
-            x =  self.classifier(x)
+            x3 = self.classifier(torch.abs(x1 - x2))
+            return x1, x2, x3
         else:
             x = self.classifier(self.embedder(x1))
-        return x
+            return x
 
 # ******************************************************************************************************************** #
 
@@ -68,7 +70,6 @@ roi_extractor.eval()
 fea_extractor = FeatureExtractor()
 fea_extractor.to(u.DEVICE)
 fea_extractor.eval()
-
 
 # ******************************************************************************************************************** #
 
