@@ -57,6 +57,9 @@ class SiameseDS(Dataset):
                 self.pX = np.concatenate((self.anchor, np.expand_dims(self.p_vector[:min_val], axis=1)), axis=1)
                 self.nX = np.concatenate((self.anchor, np.expand_dims(self.n_vector[:min_val], axis=1)), axis=1)
 
+                # print(self.pX.shape)
+                # print(self.nX.shape)
+
                 # Generate Labels 
                 self.py = np.ones((self.pX.shape[0], 1))
                 self.ny = np.zeros((self.nX.shape[0], 1))
@@ -72,6 +75,7 @@ class SiameseDS(Dataset):
             # Clean Up; remove the first element
             self.fullX = self.fullX[1:]
             self.fully = self.fully[1:]
+
         else:
             for anchor in self.anchors:
                 self.anchor = np.array([anchor for _ in range(self.p_vector.shape[0])])
@@ -83,6 +87,9 @@ class SiameseDS(Dataset):
                 # Concatenate Anchor with Positive/Negative along dimension 1
                 self.pX = np.concatenate((self.anchor, np.expand_dims(self.p_vector, axis=1)), axis=1)
                 self.nX = np.concatenate((self.anchor, np.expand_dims(self.n_vector, axis=1)), axis=1)
+
+                # print(self.pX.shape)
+                # print(self.nX.shape)
                 
                 # Generate Labels 
                 self.py = np.ones((self.pX.shape[0], 1))
@@ -100,6 +107,8 @@ class SiameseDS(Dataset):
             self.fullX = self.fullX[1:]
             self.fully = self.fully[1:]
 
+        # print(self.fullX.shape)
+        # print(self.fully.shape)
 
     def __len__(self):
         return self.fullX.shape[0]
