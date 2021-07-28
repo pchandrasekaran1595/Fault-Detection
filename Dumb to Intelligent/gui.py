@@ -49,52 +49,51 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, fea_extractor=
             cv2.putText(img=disp_frame, text="Match, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_GREEN, thickness=2)
-            # cv2.rectangle(img=disp_frame, 
-            #               pt1=(int(w/2) - 100, int(h/2) - 100), 
-            #               pt2=(int(w/2) + 100, int(h/2) + 100), 
-            #               color=u.GUI_GREEN, thickness=2)
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_GREEN, thickness=2)
         elif u.lower_bound_confidence <= y_pred <= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Possible Match, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_ORANGE, thickness=2)
-            # cv2.rectangle(img=disp_frame, 
-            #               pt1=(int(w/2) - 100, int(h/2) - 100), 
-            #               pt2=(int(w/2) + 100, int(h/2) + 100), 
-            #               color=u.GUI_ORANGE, thickness=2)
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_ORANGE, thickness=2)
         else:
             cv2.putText(img=disp_frame, text="No Match, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_RED, thickness=2)
-            # cv2.rectangle(img=disp_frame, 
-            #               pt1=(int(w/2) - 100, int(h/2) - 100), 
-            #               pt2=(int(w/2) + 100, int(h/2) + 100), 
-            #               color=u.GUI_RED, thickness=2)
-    
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_RED, thickness=2)
     else:
         if y_pred >= u.lower_bound_confidence:
             cv2.putText(img=disp_frame, text="Match", org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=(0, 255, 0), thickness=2)
-            # cv2.rectangle(img=disp_frame, 
-            #               pt1=(int(w/2) - 100, int(h/2) - 100), 
-            #               pt2=(int(w/2) + 100, int(h/2) + 100), 
-            #               color=u.GUI_GREEN, thickness=2) 
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_GREEN, thickness=2) 
         elif u.lower_bound_confidence <= y_pred <= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Possible Match", org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_ORANGE, thickness=2)
-            # cv2.rectangle(img=disp_frame, 
-            #               pt1=(int(w/2) - 100, int(h/2) - 100), 
-            #               pt2=(int(w/2) + 100, int(h/2) + 100), 
-            #               color=u.GUI_ORANGE, thickness=2)
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_ORANGE, thickness=2)
         else:
             cv2.putText(img=disp_frame, text="No Match", org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_RED, thickness=2)
-            # cv2.rectangle(img=disp_frame, 
-            #               pt1=(int(w/2) - 100, int(h/2) - 100), 
-            #               pt2=(int(w/2) + 100, int(h/2) + 100), 
-            #               color=u.GUI_RED, thickness=2)
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_RED, thickness=2)
     return disp_frame
 
 # ******************************************************************************************************************** #
@@ -191,8 +190,8 @@ class VideoFrame(tk.Frame):
         if not self.isResult:
             frame = u.clahe_equ(frame)
             if ret:
-                # h, w, _ = frame.shape
-                # frame = cv2.rectangle(img=frame, pt1=(int(w/2) - 100, int(h/2) - 100), pt2=(int(w/2) + 100, int(h/2) + 100), color=(255, 255, 255), thickness=2)
+                h, w, _ = frame.shape
+                frame = cv2.rectangle(img=frame, pt1=(int(w/2) - 100, int(h/2) - 100), pt2=(int(w/2) + 100, int(h/2) + 100), color=(255, 255, 255), thickness=2)
 
                 # Convert image from np.ndarray format into tkinter canvas compatible format and update
                 self.image = ImageTk.PhotoImage(Image.fromarray(frame))
