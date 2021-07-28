@@ -36,3 +36,5 @@
 - Cannot detect minute changes. (Issue ..??)
 - Changing background affects the system, unless image with that bakcground is included in the dataset.
 - Retraining may cause upper boud confidence to be reduced, but the system is able to reliably split into Faulty or Defective.
+- To install the development version of Pytorch, use:
+`pip install torch==1.8.0+cu111 torchvision==0.9.0+cu111 torchaudio==0.8.0 -f https://download.pytorch.org/whl/torch_stable.html`
