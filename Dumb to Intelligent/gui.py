@@ -206,7 +206,7 @@ class VideoFrame(tk.Frame):
 
                 # Process frame in during inference
                 frame = __help__(frame=frame, model=self.model, anchor=None,
-                                 show_prob=False, fea_extractor=Models.fea_extractor)
+                                 show_prob=True, fea_extractor=Models.fea_extractor)
 
                 # Convert image from np.ndarray format into tkinter canvas compatible format
                 self.image = ImageTk.PhotoImage(Image.fromarray(frame))

@@ -41,7 +41,7 @@ def get_augments(augment_seed=None):
     ])
 
     imgaug.seed(entropy=augment_seed)
-    roi_augment = augmenters.Sequential([augmenters.imgcorruptlike.GlassBlur(severity=5, seed=augment_seed),])
+    roi_augment = augmenters.Sequential([augmenters.imgcorruptlike.GlassBlur(severity=5, seed=augment_seed),] * 2)
 
     return dataset_augment, roi_augment
 
@@ -91,6 +91,12 @@ def make_data(part_name=None, cls="Positive", num_samples=None, batch_size=48, f
 
             # Obtain bounding box coordinates of the object
             x1, y1, x2, y2 = u.get_box_coordinates_make_data(roi_extractor, u.ROI_TRANSFORM, image)
+
+            # In case bounding box detected is smaller than imgaug threshold
+            if abs(x1 - x2) < 32:
+                x2 = x1 + 32
+            if abs(y1 - y2) < 32:
+                y2 = y1 + 32
 
             # Extract ROI
             crp_img = image[y1:y2, x1:x2]
