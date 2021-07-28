@@ -2,4 +2,4 @@
 
 - This is to be used for testing
 
-- Used Contrastive Loss to try and seperate apart Samples
+- Uses Contrastive Loss to try and seperate apart Samples

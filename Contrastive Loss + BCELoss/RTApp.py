@@ -1,3 +1,7 @@
+"""
+    CLI Realtime Inference
+"""
+
 import os
 import platform
 import cv2
@@ -86,6 +90,7 @@ def realtime(device_id=None, part_name=None, model=None, save=False, fea_extract
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, u.CAM_WIDTH)
     cap.set(cv2.CAP_PROP_FPS, u.FPS)
 
+    # Save a video file if flag is set
     if save:
         filename = os.path.join(base_path, "{}.mp4".format(part_name))
         codec = cv2.VideoWriter_fourcc(*"mp4v")
@@ -95,6 +100,7 @@ def realtime(device_id=None, part_name=None, model=None, save=False, fea_extract
     file = open(os.path.join(base_path, "Box.txt"), "r")
     data = file.read().split(",")
     file.close()
+
     countp, countn = len(os.listdir(os.path.join(base_path, "Positive"))), len(os.listdir(os.path.join(base_path, "Negative"))) + 1
     if countn == 0:
         countn = 1
@@ -102,7 +108,10 @@ def realtime(device_id=None, part_name=None, model=None, save=False, fea_extract
     # Read data from capture object
     while cap.isOpened():
         _, frame = cap.read()
+
+        # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
         frame = u.clahe_equ(frame)
+
         disp_frame = __help__(frame=frame, model=model, 
                               fea_extractor=fea_extractor,
                               show_prob=show_prob, pt1=(data[0], data[1]), pt2=(data[2], data[3]))
@@ -163,18 +172,28 @@ def video(filename=None, part_name=None, model=None, save=False, fea_extractor=N
         filename = os.path.join(base_path, "{}.mp4".format(part_name))
         codec = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(filename, codec, 30.01, (2*u.camWidth, u.camHeight))
+    
+    # Open the file containing reference box coordinates
+    file = open(os.path.join(base_path, "Box.txt"), "r")
+    data = file.read().split(",")
+    file.close()
 
     countp, countn = len(os.listdir(os.path.join(base_path, "Positive"))), len(os.listdir(os.path.join(base_path, "Negative"))) + 1
     if countn == 0:
         countn = 1
-    
+
     # Read data from capture object
     while cap.isOpened():
         ret, frame = cap.read()
 
         if ret:
+            # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
+            frame = u.clahe_equ(frame)
+
             # Perform Inference
-            disp_frame = __help__(frame=frame, model=model, fea_extractor=fea_extractor, show_prob=show_prob)
+            disp_frame = __help__(frame=frame, model=model, 
+                                  fea_extractor=fea_extractor, show_prob=show_prob, 
+                                  pt1=(data[0], data[1]), pt2=(data[2], data[3]))
             
             # ********************************************************************* #
 

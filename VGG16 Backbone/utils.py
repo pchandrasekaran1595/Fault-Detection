@@ -1,3 +1,7 @@
+"""
+    Constants and Utility Functions
+"""
+
 import os
 import cv2
 import torch
@@ -5,13 +9,16 @@ from torchvision import transforms, ops
 from termcolor import colored
 os.system("color")
 
+# Self Aware Dataset Directory
 DATASET_PATH = os.path.join(os.getcwd(), "Datasets")
 if not os.path.exists(DATASET_PATH):
     os.makedirs(DATASET_PATH)
 # DATASET_PATH = os.path.join(os.path.dirname(__file__), "Datasets")
 
+# Capture object Attributes
 CAM_WIDTH, CAM_HEIGHT, FPS, DELAY = 640, 360, 30, 5
 
+# DL Model Constants
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 ROI_TRANSFORM = transforms.Compose([transforms.ToTensor(), ])
@@ -68,6 +75,14 @@ def preprocess(image, change_color_space=True):
     h, w, _ = image.shape
     cx, cy = w // 2, h // 2
     return image[cy - 112:cy + 112, cx - 112:cx + 112, :]
+
+# ******************************************************************************************************************** #
+
+# Normalize the vector to a min-max of [0, 1]
+def normalize(x):
+    for i in range(x.shape[0]):
+        x[i] = (x[i] - torch.min(x[i])) / (torch.max(x[i]) - torch.min(x[i]))
+    return x
 
 # ******************************************************************************************************************** #
 
@@ -140,14 +155,6 @@ def process(image, x1, y1, x2, y2):
     else:
         cv2.rectangle(img=image, pt1=(x1, y1), pt2=(x2, y2), color=(255, 255, 255), thickness=2)
     return image
-
-# ******************************************************************************************************************** #
-
-# Normalize the vector to a min-max of [0, 1]
-def normalize(x):
-    for i in range(x.shape[0]):
-        x[i] = (x[i] - torch.min(x[i])) / (torch.max(x[i]) - torch.min(x[i]))
-    return x
 
 # ******************************************************************************************************************** #
 

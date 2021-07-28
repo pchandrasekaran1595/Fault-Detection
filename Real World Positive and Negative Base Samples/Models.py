@@ -1,3 +1,7 @@
+"""
+    Models
+"""
+
 import torch
 from torchvision import models
 from torch import nn, optim
@@ -32,9 +36,13 @@ class FeatureExtractor(nn.Module):
 
 # ******************************************************************************************************************** #
 
+"""
+    - Siamese Network Architecture (Input Layer --> Embedding Layer --> Similarity Predictor)
+    - Expects a pair of inputs during the training phase
+"""
 class SiameseNetwork(nn.Module):
     def __init__(self, IL=u.FEATURE_VECTOR_LENGTH, embed=None):
-        nn.Module.__init__(self)
+        super(SiameseNetwork, self).__init__()
 
         self.embedder = nn.Sequential()
         self.embedder.add_module("BN", nn.BatchNorm1d(num_features=IL, eps=1e-5))
@@ -73,6 +81,7 @@ fea_extractor.eval()
 
 # ******************************************************************************************************************** #
 
+# Setup the Siamese Netowrk
 def build_siamese_model(embed=None):
     if embed is not None:
         torch.manual_seed(u.SEED)

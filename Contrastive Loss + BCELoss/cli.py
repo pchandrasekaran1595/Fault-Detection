@@ -46,6 +46,13 @@ def app():
         ch = input("1. Add Object\n2. Retrain\n3. Application\n4. Exit\n\nEnter Choice : ")
 
         if ch == "1":
+            """
+                Add Object
+                    - Capture image Snapshot
+                    - Generate Feature Vector Dataset
+                    - Train the Model
+                    - Perform Realtime Inference
+            """
             u.breaker()
             part_name = input("Enter part name : ")
             capture_snapshot(device_id=u.device_id, part_name=part_name, roi_extractor=Models.roi_extractor)
@@ -62,6 +69,11 @@ def app():
             realtime(device_id=u.device_id, part_name=part_name, model=model, save=False, fea_extractor=Models.fea_extractor)
         
         elif ch == "2":
+            """ 
+                Retrain
+                    - Generate Feature Vector Dataset
+                    - Train the Model
+            """
             u.breaker()
             part_name = input("Enter part name : ")
 
@@ -76,6 +88,10 @@ def app():
             trainer(part_name=part_name, model=model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
         
         elif ch == "3":
+            """
+                Application
+                    - Perform Realtime Inference
+            """
             model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
             u.breaker()
             part_name = input("Enter part name : ")
