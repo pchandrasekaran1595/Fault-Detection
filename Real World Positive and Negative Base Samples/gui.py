@@ -5,7 +5,6 @@
 import os
 import sys
 import cv2
-import shutil
 import ctypes
 import torch
 import platform
@@ -27,7 +26,6 @@ screen_resolution = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.use
 
 # ******************************************************************************************************************** #
 
-# Inference Helper
 # Inference Helper
 def __help__(frame=None, anchor=None, model=None, show_prob=True, fea_extractor=None):
     """
@@ -171,11 +169,7 @@ class VideoFrame(tk.Frame):
             self.model.load_state_dict(torch.load(self.model_path, map_location=u.DEVICE)["model_state_dict"])
             self.model.eval()
             self.model.to(u.DEVICE)
-
-            # Get the Reference Bounding Box Coordinates
-            file = open(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Box.txt"), "r")
-            self.data = file.read().split(",")
-            file.close()
+            self.anchor = cv2.imread(os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Snapshot_1.png"), cv2.IMREAD_COLOR)
 
         # Setup the canvas and pack it into the frame
         self.canvas = tk.Canvas(self, width=u.CAM_WIDTH, height=u.CAM_HEIGHT, background="black")
@@ -218,7 +212,7 @@ class VideoFrame(tk.Frame):
 
                 # Process frame in during inference
                 frame = __help__(frame=frame, model=self.model, anchor=None,
-                                 show_prob=False, fea_extractor=Models.fea_extractor)
+                                 show_prob=True, fea_extractor=Models.fea_extractor)
 
                 # Convert image from np.ndarray format into tkinter canvas compatible format
                 self.image = ImageTk.PhotoImage(Image.fromarray(frame))
@@ -226,7 +220,7 @@ class VideoFrame(tk.Frame):
                 self.id = self.after(self.delay, self.update)
             else:
                 return
-        
+
     def stop(self):
         """
             Stop updating the canvas
@@ -266,36 +260,20 @@ class ImageFrame(tk.Frame):
 
 # tkinter Button Handling
 class ButtonFrame(tk.Frame):
-    def __init__(self, master, VideoWidget=None, ImageWidget=None, part_name=None, adderstate=False, *args, **kwargs):
+    def __init__(self, master, VideoWidget=None, ImageWidget=None, part_name=None, isFirstTimeRun=None, *args, **kwargs):
         tk.Frame.__init__(self, master, width=150, background="#2C40D1", *args, **kwargs)
 
         self.master = master
         self.VideoWidget = VideoWidget
         self.ImageWidget = ImageWidget
+
         self.widget_height = 3
         self.widget_width = 25
 
+        self.isFirstTimeRun = isFirstTimeRun
+
         self.part_name = part_name
-        if self.part_name:
-            path = os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive")
-            Len = len(os.listdir(path))
-            if Len > 0:
-                self.countp = Len
-            else:
-                self.countp = 1
-            
-            path = os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Negative")
-            Len = len(os.listdir(path))
-            if Len > 0:
-                self.countn = Len + 1
-            else:
-                self.countn = 1
-    
-        self.adderstate = adderstate
-        if self.adderstate:
-            self.buttonState = "normal"
-        else:
-            self.buttonState = "disabled"
+        self.countn, self.countp = 1, 1
 
         # Label Widget
         self.label = tk.Label(self, text="Component/Part Name", 
@@ -310,40 +288,33 @@ class ButtonFrame(tk.Frame):
                               width=self.widget_width, relief="sunken")
         self.entry.grid(row=0, column=1)
 
-        # Button : Add Object (capture, train & realtime)
-        self.addButton = tk.Button(self, text="Add Object",
-                                   width=self.widget_width, height=self.widget_height, 
-                                   background="#0FAFFF", activebackground="#8ED9FF", foreground="black",
-                                   relief="raised", command=self.do_add)
-        self.addButton.grid(row=1, column=0)
+        # Button : Add to Positive
+        self.posButton = tk.Button(self, text="Add to Positive",
+                                     width=self.widget_width, height=self.widget_height, 
+                                     background="#DFDFDC", activebackground="#F6F6F4", foreground="black",
+                                     relief="raised", command=self.do_pos)
+        self.posButton.grid(row=1, column=0)
+
+        # Button : Add to Negative
+        self.negButton = tk.Button(self, text="Add to Negative",
+                                     width=self.widget_width, height=self.widget_height, 
+                                     background="#505050", activebackground="#717171", foreground="black",
+                                     relief="raised", command=self.do_neg)
+        self.negButton.grid(row=1, column=1)
 
         # Button : Train
         self.trainButton = tk.Button(self, text="Train",
                                      width=self.widget_width, height=self.widget_height, 
-                                     background="#74FF00", activebackground="#B1FF70", foreground="black",
+                                     background="#45FE33", activebackground="#8EFF83", foreground="black",
                                      relief="raised", command=self.do_train)
-        self.trainButton.grid(row=1, column=1)
+        self.trainButton.grid(row=2, column=0)
 
         # Button : Realtime Application
         self.rtAppButton = tk.Button(self, text="Application",
                                      width=self.widget_width, height=self.widget_height, 
                                      background="#00FFD4", activebackground="#8AFFEB", foreground="black",
                                      relief="raised", command=self.do_rtapp)
-        self.rtAppButton.grid(row=1, column=2)
-
-        # Button : Add to Positive
-        self.posButton = tk.Button(self, text="Add to Positive",
-                                     width=self.widget_width, height=self.widget_height, 
-                                     background="#69E14D", activebackground="#A8E39A", foreground="black",
-                                     relief="raised", state=self.buttonState, command=self.do_pos)
-        self.posButton.grid(row=2, column=0)
-
-        # Button : Add to Negative
-        self.negButton = tk.Button(self, text="Add to Negative",
-                                     width=self.widget_width, height=self.widget_height, 
-                                     background="#7F827E", activebackground="#BAC0B8", foreground="black",
-                                     relief="raised", state=self.buttonState, command=self.do_neg)
-        self.negButton.grid(row=2, column=2)
+        self.rtAppButton.grid(row=2, column=1)
 
         # Button : Reset
         self.resetButton = tk.Button(self, text="Reset",
@@ -357,10 +328,11 @@ class ButtonFrame(tk.Frame):
                                     width=self.widget_width, height=self.widget_height, 
                                     background="red", activebackground="#FCAEAE", foreground="black",
                                     relief="raised", command=self.do_quit)
-        self.quitButton.grid(row=3, column=2)
-    
-    # Callback handling Adding of new Objects
-    def do_add(self):
+        self.quitButton.grid(row=3, column=1)
+
+    # Callback handling adding images to the Positive Diretory
+    def do_pos(self):
+
         # Get the part name from the entry field
         self.part_name = self.entry.get()
 
@@ -370,16 +342,12 @@ class ButtonFrame(tk.Frame):
         else:
             messagebox.showerror(title="Value Error", message="Enter a valid input")
             return
-
-        # If the dataset path doesn't exist, create it. If it does, destoy it and create it again
+        
+        # If the dataset path doesn't exist, create it
         if not os.path.exists(self.path):
             os.makedirs(self.path)
-        else:
-            shutil.rmtree(os.path.join(u.DATASET_PATH, self.part_name))
-            os.makedirs(self.path)
 
-        # Open a text file to hold bouding box coordinates of "Snapshot_1.png"
-        file = open(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Box.txt"), "w+")
+        self.countp = len(os.listdir(self.path)) + 1
 
         # Read the current frame from the capture object
         ret, frame = self.VideoWidget.V.get_frame()
@@ -387,49 +355,53 @@ class ButtonFrame(tk.Frame):
 
         # Save the frame and update counter
         if ret:
-            cv2.imwrite(os.path.join(self.path, "Snapshot_1.png"), cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB))
-            x1, y1, x2, y2 = u.get_box_coordinates(Models.roi_extractor, u.ROI_TRANSFORM, frame)
-            file.write(repr(x1) + "," + repr(y1) + "," +repr(x2) + "," + repr(y2))
+            cv2.imwrite(os.path.join(self.path, "Snapshot_{}.png".format(self.countp)), cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB))
+            self.countp += 1
+
+
+    # Callback handling adding images to the Negative Diretory
+    def do_neg(self):
+
+        # Get the part name from the entry field
+        self.part_name = self.entry.get()
+
+        # Check that user has entered a name; only then proceed, else display error message
+        if self.part_name:
+            self.path = os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Negative")
+        else:
+            messagebox.showerror(title="Value Error", message="Enter a valid input")
+            return
         
-        # Close the file
-        file.close()
-        
-        # Release the capture object; Minimize the Application
-        self.VideoWidget.stop()
-        self.master.iconify()
+        # If the dataset path doesn't exist, create it
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
 
-        # Generate the Feature Vector Dataset
-        u.breaker()
-        u.myprint("Generating Feature Vector Data ...", "green")
-        start_time = time()
-        make_data(part_name=self.part_name, cls="Positive", num_samples=u.num_samples, fea_extractor=Models.fea_extractor)
-        make_data(part_name=self.part_name, cls="Negative", num_samples=u.num_samples, fea_extractor=Models.fea_extractor)
-        u.myprint("\nTime Taken [{}] : {:.2f} minutes".format(2*u.num_samples, (time()-start_time)/60), "green")
+        self.countn = len(os.listdir(self.path)) + 1
 
-        # Initialize Siamese Network
-        model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+        # Read the current frame from the capture object
+        ret, frame = self.VideoWidget.V.get_frame()
+        frame = u.clahe_equ(frame)
 
-        # Train the Model
-        trainer(part_name=self.part_name, model=model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
-
-        # Maximize the application window
-        self.master.state("zoomed")
-
-        # Destory the current application window
-        self.master.destroy()
-
-        # Start a new application window
-        setup(part_name=self.part_name, model=model, imgfilepath=os.path.join(self.path, "Snapshot_1.png"), adderstate=True, isResult=True)
-
+        # Save the frame and update counter
+        if ret:
+            cv2.imwrite(os.path.join(self.path, "Snapshot_{}.png".format(self.countn)), cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB))
+            self.countn += 1
+    
     # Callback handling the Training
     def do_train(self):
-        # If field is empty, get from the user
-        if not self.part_name:
-            self.part_name = self.entry.get()
-            self.path = os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive")
 
+        # Get the part name from the entry field
+        self.part_name = self.entry.get()
+
+        # Check that user has entered a name; only then proceed, else display error message
         if self.part_name:
             u.breaker()
+
+            # path = os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Checkpoints")
+            # names = os.listdir(path)
+            # if "State.pt" in names:
+            #     self.model_path = os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Checkpoints"), "State.pt")
+            #     self.model.load_state_dict(torch.load(self.model_path, map_location=u.DEVICE)["model_state_dict"])
 
             # Release the capture object; Minimize the Application
             self.VideoWidget.stop()
@@ -459,6 +431,7 @@ class ButtonFrame(tk.Frame):
     
     # Callback handling the Inference
     def do_rtapp(self):
+
         # Get the part name from the entry field
         self.part_name = self.entry.get()
 
@@ -467,35 +440,14 @@ class ButtonFrame(tk.Frame):
             # Destroy the current application window
             self.master.destroy()
 
+            # Initialize Siamese Network
+            model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+
             # Start a new application window
-            setup(part_name=self.part_name, model=self.model, imgfilepath=os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Snapshot_1.png"), adderstate=True, isResult=True)
+            setup(part_name=self.part_name, model=model, imgfilepath=os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Snapshot_1.png"), isResult=True)
         else:
             messagebox.showerror(title="Value Error", message="Enter a valid input")
             return
-    
-    # Callback handling adding images to the Positive Diretory
-    def do_pos(self):
-        
-        # Read the current frame from the capture object
-        ret, frame = self.VideoWidget.V.get_frame()
-        frame = u.clahe_equ(frame)
-
-        # Save the frame
-        if ret:
-            cv2.imwrite(os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Extra_{}.png".format(self.countp)), cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB))
-            self.countp += 1
-
-    # Callback handling adding images to the Negative Diretory
-    def do_neg(self):
-
-        # Read the current frame from the capture object
-        ret, frame = self.VideoWidget.V.get_frame()
-        frame = u.clahe_equ(frame)
-
-        # Save the frame
-        if ret:
-            cv2.imwrite(os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Negative"), "Extra_{}.png".format(self.countn)), cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB))
-            self.countn += 1
     
     # Callback handling reset
     def do_reset(self):
@@ -522,21 +474,21 @@ class ButtonFrame(tk.Frame):
 # ******************************************************************************************************************** #
 
 # Wrapper around all the tkinter frames
-class Application():
-    def __init__(self, master, V=None, part_name=None, model=None, imgfilepath=None, adderstate=False, isResult=False):
+class Application(object):
+    def __init__(self, master, V=None, part_name=None, model=None, imgfilepath=None, isResult=False):
 
         VideoWidget = VideoFrame(master, V=V, model=model, part_name=part_name, isResult=isResult)
         VideoWidget.pack(side="left")
         VideoWidget.start()
         ImageWidget = ImageFrame(master, imgfilepath=imgfilepath)
         ImageWidget.pack(side="right")
-        ButtonWidget = ButtonFrame(master, VideoWidget=VideoWidget, ImageWidget=ImageWidget, part_name=part_name, adderstate=adderstate)
+        ButtonWidget = ButtonFrame(master, VideoWidget=VideoWidget, ImageWidget=ImageWidget, part_name=part_name)
         ButtonWidget.pack(side="bottom")
 
 # ******************************************************************************************************************** #
 
 # Top level window setup and Application start
-def setup(part_name=None, model=None, imgfilepath=None, adderstate=False, isResult=False):
+def setup(part_name=None, model=None, imgfilepath=None, isResult=False):
     # Setup a toplevel window
     window = tk.Toplevel()
     window.title("Application")
@@ -547,7 +499,7 @@ def setup(part_name=None, model=None, imgfilepath=None, adderstate=False, isResu
 
     # Initialize Application Wrapper
     Application(window, V=Video(id=u.device_id, width=u.CAM_WIDTH, height=u.CAM_HEIGHT, fps=u.FPS), 
-                part_name=part_name, model=model, imgfilepath=imgfilepath, adderstate=adderstate, isResult=isResult)
+                part_name=part_name, model=model, imgfilepath=imgfilepath, isResult=isResult)
 
 
 # ******************************************************************************************************************** #
