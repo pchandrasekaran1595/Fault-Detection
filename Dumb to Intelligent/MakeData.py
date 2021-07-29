@@ -92,6 +92,14 @@ def make_data(part_name=None, cls="Positive", num_samples=None, batch_size=48, f
             # Obtain bounding box coordinates of the object
             x1, y1, x2, y2 = u.get_box_coordinates_make_data(roi_extractor, u.ROI_TRANSFORM, image)
 
+            # # Assertion in case x1 is not a numeric value
+            # assert(x1 is not None)
+
+            # In case detetor cannot detect, conside the full image
+            if x1 is None:
+                x1, y1 = 0, 0
+                x2, y2 = u.SIZE, u.SIZE
+
             # In case bounding box detected is smaller than imgaug threshold
             if abs(x1 - x2) < 32:
                 x2 = x1 + 32
