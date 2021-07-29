@@ -28,16 +28,23 @@ screen_resolution = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.use
 # ******************************************************************************************************************** #
 
 # Inference Helper
-def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=None, fea_extractor=None):
+# Inference Helper
+def __help__(frame=None, anchor=None, model=None, show_prob=True, fea_extractor=None):
+    """
+        frame         : Current frame being processed
+        anchor        : Anchor Image
+        model         : Siamese Network Model
+        show_prob     : Flag to control whether to display the similarity score
+        fea_extractor : Feature Extraction Model
+    """
     disp_frame = frame.copy()
+    h, w, _ = frame.shape
 
     # Alpha Blend Anchor Image if it is passed
     if anchor is not None:
         disp_frame = u.alpha_blend(anchor, disp_frame, 0.15)
-
-    # Resize + Center Crop (256x256 ---> 224x224)
-    frame = u.preprocess(frame, change_color_space=False)
-
+    frame = u.preprocess(frame, False)
+    
     # Perform Inference on current frame
     with torch.no_grad():
         features = u.normalize(fea_extractor(u.FEA_TRANSFORM(frame).to(u.DEVICE).unsqueeze(dim=0)))
@@ -45,62 +52,57 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=
 
     # Prediction > Upper Bound                 -----> Match
     # Lower Bound <= Prediction <= Upper Bound -----> Possible Match
-    # Prediction < Lower Bound              
+    # Prediction < Lower Bound                 -----> Defective
     if show_prob:
         if y_pred >= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Match, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_GREEN, thickness=2)
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_GREEN, thickness=2)
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_GREEN, thickness=2)
         elif u.lower_bound_confidence <= y_pred <= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Possible Match, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_ORANGE, thickness=2)
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_ORANGE, thickness=2)
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_ORANGE, thickness=2)
         else:
-            cv2.putText(img=disp_frame, text="No Match, {:.5f}".format(y_pred), org=(25, 75),
+            cv2.putText(img=disp_frame, text="Defective, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_RED, thickness=2)
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_RED, thickness=2)
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_RED, thickness=2)
     else:
         if y_pred >= u.lower_bound_confidence:
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_GREEN, thickness=2)
-            else:
-                cv2.putText(img=disp_frame, text="Match", org=(25, 75),
-                            fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                            color=(0, 255, 0), thickness=2)
-            
+            cv2.putText(img=disp_frame, text="Match", org=(25, 75),
+                        fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        color=(0, 255, 0), thickness=2)
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_GREEN, thickness=2) 
         elif u.lower_bound_confidence <= y_pred <= u.upper_bound_confidence:
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_ORANGE, thickness=2)
-            else:
-                cv2.putText(img=disp_frame, text="Possible Match", org=(25, 75),
-                            fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                            color=u.GUI_ORANGE, thickness=2)
-        
+            cv2.putText(img=disp_frame, text="Possible Match", org=(25, 75),
+                        fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        color=u.GUI_ORANGE, thickness=2)
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_ORANGE, thickness=2)
         else:
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_RED, thickness=2)
-            else:
-                cv2.putText(img=disp_frame, text="No Match", org=(25, 75),
-                            fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                            color=u.GUI_RED, thickness=2)
+            cv2.putText(img=disp_frame, text="Defective", org=(25, 75),
+                        fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        color=u.GUI_RED, thickness=2)
+            cv2.rectangle(img=disp_frame, 
+                          pt1=(int(w/2) - 100, int(h/2) - 100), 
+                          pt2=(int(w/2) + 100, int(h/2) + 100), 
+                          color=u.GUI_RED, thickness=2)
     return disp_frame
 
 # ******************************************************************************************************************** #
@@ -164,10 +166,13 @@ class VideoFrame(tk.Frame):
 
         # If VideoFrame is in Result Mode; Default is None
         if self.isResult:
+            # Load the Model
             self.model_path = os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Checkpoints"), "State.pt")
             self.model.load_state_dict(torch.load(self.model_path, map_location=u.DEVICE)["model_state_dict"])
             self.model.eval()
             self.model.to(u.DEVICE)
+
+            # Get the Reference Bounding Box Coordinates
             file = open(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Box.txt"), "r")
             self.data = file.read().split(",")
             file.close()
@@ -198,8 +203,8 @@ class VideoFrame(tk.Frame):
         if not self.isResult:
             frame = u.clahe_equ(frame)
             if ret:
-                # h, w, _ = frame.shape
-                # frame = cv2.rectangle(img=frame, pt1=(int(w/2) - 100, int(h/2) - 100), pt2=(int(w/2) + 100, int(h/2) + 100), color=(255, 255, 255), thickness=2)
+                h, w, _ = frame.shape
+                frame = cv2.rectangle(img=frame, pt1=(int(w/2) - 100, int(h/2) - 100), pt2=(int(w/2) + 100, int(h/2) + 100), color=(255, 255, 255), thickness=2)
 
                 # Convert image from np.ndarray format into tkinter canvas compatible format and update
                 self.image = ImageTk.PhotoImage(Image.fromarray(frame))
@@ -261,7 +266,7 @@ class ImageFrame(tk.Frame):
 
 # tkinter Button Handling
 class ButtonFrame(tk.Frame):
-    def __init__(self, master, VideoWidget=None, ImageWidget=None, model=None, part_name=None, adderstate=False, *args, **kwargs):
+    def __init__(self, master, VideoWidget=None, ImageWidget=None, part_name=None, adderstate=False, *args, **kwargs):
         tk.Frame.__init__(self, master, width=150, background="#2C40D1", *args, **kwargs)
 
         self.master = master
@@ -269,7 +274,6 @@ class ButtonFrame(tk.Frame):
         self.ImageWidget = ImageWidget
         self.widget_height = 3
         self.widget_width = 25
-        self.mdoel = model
 
         self.part_name = part_name
         if self.part_name:
@@ -292,7 +296,6 @@ class ButtonFrame(tk.Frame):
             self.buttonState = "normal"
         else:
             self.buttonState = "disabled"
-        self.model = model
 
         # Label Widget
         self.label = tk.Label(self, text="Component/Part Name", 
@@ -403,8 +406,11 @@ class ButtonFrame(tk.Frame):
         make_data(part_name=self.part_name, cls="Negative", num_samples=u.num_samples, fea_extractor=Models.fea_extractor)
         u.myprint("\nTime Taken [{}] : {:.2f} minutes".format(2*u.num_samples, (time()-start_time)/60), "green")
 
+        # Initialize Siamese Network
+        model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+
         # Train the Model
-        trainer(part_name=self.part_name, model=self.model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
+        trainer(part_name=self.part_name, model=model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
 
         # Maximize the application window
         self.master.state("zoomed")
@@ -413,7 +419,7 @@ class ButtonFrame(tk.Frame):
         self.master.destroy()
 
         # Start a new application window
-        setup(part_name=self.part_name, model=self.model, imgfilepath=os.path.join(self.path, "Snapshot_1.png"), adderstate=True, isResult=True)
+        setup(part_name=self.part_name, model=model, imgfilepath=os.path.join(self.path, "Snapshot_1.png"), adderstate=True, isResult=True)
 
     # Callback handling the Training
     def do_train(self):
@@ -436,8 +442,11 @@ class ButtonFrame(tk.Frame):
             make_data(part_name=self.part_name, cls="Negative", num_samples=u.num_samples, fea_extractor=Models.fea_extractor)
             u.myprint("\nTime Taken [{}] : {:.2f} minutes".format(2*u.num_samples, (time()-start_time)/60), "green")
 
+            # Initialize Siamese Network
+            model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+
             # Train the Model
-            trainer(part_name=self.part_name, model=self.model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
+            trainer(part_name=self.part_name, model=model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
 
             # Start the capture object; Maximize the Application
             self.VideoWidget.start()
@@ -476,7 +485,7 @@ class ButtonFrame(tk.Frame):
             cv2.imwrite(os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Extra_{}.png".format(self.countp)), cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB))
             self.countp += 1
 
-    # Callback handling adding images to the Positive Diretory
+    # Callback handling adding images to the Negative Diretory
     def do_neg(self):
 
         # Read the current frame from the capture object
@@ -565,7 +574,7 @@ def app():
     # Initialize Siamese Network
     model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
 
-    # Start a ne application window
+    # Start a new application window
     setup(model=model)
     
     # Start

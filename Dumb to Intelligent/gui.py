@@ -28,6 +28,13 @@ screen_resolution = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.use
 
 # Inference Helper
 def __help__(frame=None, anchor=None, model=None, show_prob=True, fea_extractor=None):
+    """
+        frame         : Current frame being processed
+        anchor        : Anchor Image
+        model         : Siamese Network Model
+        show_prob     : Flag to control whether to display the similarity score
+        fea_extractor : Feature Extraction Model
+    """
     disp_frame = frame.copy()
     h, w, _ = frame.shape
 
@@ -43,7 +50,7 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, fea_extractor=
 
     # Prediction > Upper Bound                 -----> Match
     # Lower Bound <= Prediction <= Upper Bound -----> Possible Match
-    # Prediction < Lower Bound                 -----> No Match
+    # Prediction < Lower Bound                 -----> Defective
     if show_prob:
         if y_pred >= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Match, {:.5f}".format(y_pred), org=(25, 75),
@@ -62,7 +69,7 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, fea_extractor=
                           pt2=(int(w/2) + 100, int(h/2) + 100), 
                           color=u.GUI_ORANGE, thickness=2)
         else:
-            cv2.putText(img=disp_frame, text="No Match, {:.5f}".format(y_pred), org=(25, 75),
+            cv2.putText(img=disp_frame, text="Defective, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_RED, thickness=2)
             cv2.rectangle(img=disp_frame, 
@@ -87,7 +94,7 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, fea_extractor=
                           pt2=(int(w/2) + 100, int(h/2) + 100), 
                           color=u.GUI_ORANGE, thickness=2)
         else:
-            cv2.putText(img=disp_frame, text="No Match", org=(25, 75),
+            cv2.putText(img=disp_frame, text="Defective", org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_RED, thickness=2)
             cv2.rectangle(img=disp_frame, 
@@ -253,7 +260,7 @@ class ImageFrame(tk.Frame):
 
 # tkinter Button Handling
 class ButtonFrame(tk.Frame):
-    def __init__(self, master, VideoWidget=None, ImageWidget=None, model=None, part_name=None, isFirstTimeRun=None, *args, **kwargs):
+    def __init__(self, master, VideoWidget=None, ImageWidget=None, part_name=None, isFirstTimeRun=None, *args, **kwargs):
         tk.Frame.__init__(self, master, width=150, background="#2C40D1", *args, **kwargs)
 
         self.master = master
@@ -267,8 +274,6 @@ class ButtonFrame(tk.Frame):
 
         self.part_name = part_name
         self.countn, self.countp = 1, 1
-
-        self.model = model
 
         # Label Widget
         self.label = tk.Label(self, text="Component/Part Name", 
@@ -409,8 +414,11 @@ class ButtonFrame(tk.Frame):
             make_data(part_name=self.part_name, cls="Negative", num_samples=u.num_samples, fea_extractor=Models.fea_extractor, roi_extractor=Models.roi_extractor)
             u.myprint("\nTime Taken [{}] : {:.2f} minutes".format(2*u.num_samples, (time()-start_time)/60), "green")
 
+            # Initialize Siamese Network
+            model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+
             # Train the Model
-            trainer(part_name=self.part_name, model=self.model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
+            trainer(part_name=self.part_name, model=model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
 
             # Start the capture object; Maximize the Application
             self.VideoWidget.start()
@@ -432,8 +440,11 @@ class ButtonFrame(tk.Frame):
             # Destroy the current application window
             self.master.destroy()
 
+            # Initialize Siamese Network
+            model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+
             # Start a new application window
-            setup(part_name=self.part_name, model=self.model, imgfilepath=os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Snapshot_1.png"), isResult=True)
+            setup(part_name=self.part_name, model=model, imgfilepath=os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Snapshot_1.png"), isResult=True)
         else:
             messagebox.showerror(title="Value Error", message="Enter a valid input")
             return
@@ -446,7 +457,7 @@ class ButtonFrame(tk.Frame):
         # Destory the current application window
         self.master.destroy()
 
-        # Reinitialize Siamese Network
+        # Initialize Siamese Network
         model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
 
         # Start a new application window
@@ -471,7 +482,7 @@ class Application(object):
         VideoWidget.start()
         ImageWidget = ImageFrame(master, imgfilepath=imgfilepath)
         ImageWidget.pack(side="right")
-        ButtonWidget = ButtonFrame(master, VideoWidget=VideoWidget, ImageWidget=ImageWidget, model=model, part_name=part_name)
+        ButtonWidget = ButtonFrame(master, VideoWidget=VideoWidget, ImageWidget=ImageWidget, part_name=part_name)
         ButtonWidget.pack(side="bottom")
 
 # ******************************************************************************************************************** #

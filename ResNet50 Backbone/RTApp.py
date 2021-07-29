@@ -1,5 +1,5 @@
 """
-    CLI Realtime Inference
+    Realtime Inference
 """
 
 import os
@@ -14,6 +14,14 @@ import utils as u
 
 # Inference Helper
 def __help__(frame=None, model=None, fea_extractor=None, show_prob=True, pt1=None, pt2=None):
+    """
+        frame         : Current frame being processed
+        model         : Siamese Network Model
+        fea_extractor : Feature Extraction Model
+        show_prob     : Flag to control whether to display the similarity score
+        pt1           : Start Point of the Reference Bounding Box
+        pt2           : End Point of the Reference Bounding Box
+    """
     disp_frame = frame.copy()
 
     # Resize + Center Crop (256x256 ---> 224x224)
@@ -26,7 +34,7 @@ def __help__(frame=None, model=None, fea_extractor=None, show_prob=True, pt1=Non
 
     # Prediction > Upper Bound                 -----> Match
     # Lower Bound <= Prediction <= Upper Bound -----> Possible Match
-    # Prediction < Lower Bound                 -----> No Match
+    # Prediction < Lower Bound                 -----> Defective
     if show_prob:
         if y_pred >= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Match, {:.5f}".format(y_pred), org=(25, 75),
@@ -45,7 +53,7 @@ def __help__(frame=None, model=None, fea_extractor=None, show_prob=True, pt1=Non
                           color=u.CLI_ORANGE, thickness=2)
 
         else:
-            cv2.putText(img=disp_frame, text="No Match, {:.5f}".format(y_pred), org=(25, 75),
+            cv2.putText(img=disp_frame, text="Defective, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.CLI_RED, thickness=2)
             cv2.rectangle(img=disp_frame, 
@@ -70,6 +78,14 @@ def __help__(frame=None, model=None, fea_extractor=None, show_prob=True, pt1=Non
 
 # Realtime Inference
 def realtime(device_id=None, part_name=None, model=None, save=False, fea_extractor=None, show_prob=False):
+    """
+        device_id     : Device ID of the capture object
+        part_name     : Name of the part under inference
+        model         : Siamese Network Model
+        save          : Flag to control whether to save inference to a video file
+        fea_extractor : Feature Extraction Model
+        show_prob     : Flag to control whether to display the similarity score
+    """
     base_path = os.path.join(u.DATASET_PATH, part_name)
 
     # Read the anchor image
@@ -112,6 +128,7 @@ def realtime(device_id=None, part_name=None, model=None, save=False, fea_extract
         # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
         frame = u.clahe_equ(frame)
 
+        # Perform Inference
         disp_frame = __help__(frame=frame, model=model, 
                               fea_extractor=fea_extractor,
                               show_prob=show_prob, pt1=(data[0], data[1]), pt2=(data[2], data[3]))
@@ -153,6 +170,14 @@ def realtime(device_id=None, part_name=None, model=None, save=False, fea_extract
 
 # Inference performed on video file
 def video(filename=None, part_name=None, model=None, save=False, fea_extractor=None, show_prob=True):
+    """
+        filename      : Name of the Video File 
+        part_name     : Name of the part under inference
+        model         : Siamese Network Model
+        save          : Flag to control whether to save inference to a video file
+        fea_extractor : Feature Extraction Model
+        show_prob     : Flag to control whether to display the similarity score
+    """
     base_path = os.path.join(u.DATASET_PATH, part_name)
 
     # Read the anchor image

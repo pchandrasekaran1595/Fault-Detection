@@ -6,17 +6,17 @@
 
 - Architecture of MLP used is [input_layer --> embed_layer --> output]
     1. input_layer - Size of the feature vector obtained from the pretrained network.
-    2. embed_layer - New size of the feature embeddings. Can be provided by use via the command line.
-    3. output - Single neuron which after passing through a sigmoid gives a percent prediction.
+    2. embed_layer - New size of the feature embeddings. Can be provided by user via the command line.
+    3. output      - Single neuron which after passing through a sigmoid gives a percent prediction / similarity score.
 
 - Operations taking place during an application run:
-    1. Capture of an image from video a feed at the discretion of the user. An Object Detector is used to extract the approximate bounding box of the component within the frame. This bounding box is used in the Realtime Application to set a predefined area within the frame where the object can be placed. (Bounding Box Detection is not applicable for Real World Positive and Negative Base Samples)
+    1. Capture of an image from video a feed at the discretion of the user. An Object Detector is used to extract the approximate bounding box of the component within the frame. This bounding box is used in the Realtime Application to set a predefined area within the frame where the object can be placed. (Bounding Box Detection is not applicable for Real World Positive and Negative Base Samples and Dumb to Intelligent)
     2. Creation of the Feature Vector Dataset.
         1. Define a pretrained model to use and cut off the final classification layer. (FeatureExtractors in Templates/Pytorch/VisionModels.py)
         2. Artificially increase dataset size by augmentation. 
         3. Apply necessary transforms and pass images through the network to obtain features. Concatenate and save.
-    3. Load features saved in Step 2 and pass it through a Dataset creation pipeline making the data suitable for usage with a Siamese Network. Since pytorch is being used, also build the dataloaders.
-    4. Train the model. At present, only limited hyperparameters are present and can be changed only from the source. However, end user can set:
+    3. Load features saved in Step 2 and pass it through a dataset creation pipeline making the data suitable for usage with a Siamese Network. Since pytorch is being used, also build the dataloaders.
+    4. Train the model. At present, only limited hyperparameters are present and can only be changed from the source. However, end user can set:
         1. Number of Epochs (Default: 1000)
         2. Number of Samples (Default: 1000)
         3. Size of New Embeddings (Default: 2048)
@@ -28,13 +28,9 @@
 - Realtime Application of the designed network.
     1. Extract features of every frame.
     2. Pass these features into the trained MLP to obtain a prediction.
-    3. Based on a predefined confidence, classify the image as Faulty, Possible match or Defective.
+    3. Based on a predefined confidence, classify the image as Match, Possible Match or Defective.
     4. If it is a False Positive or False Negative, press the appropriate button to add image captured from feed into the correct directory.
 
 
-### Notes:
-- Cannot detect minute changes. (Issue ..??)
-- Changing background affects the system, unless image with that bakcground is included in the dataset.
-- Retraining may cause upper boud confidence to be reduced, but the system is able to reliably split into Faulty or Defective.
-- To install the development version of Pytorch, use:
+- To install the application's development version of Pytorch, use:
 `pip install torch==1.8.0+cu111 torchvision==0.9.0+cu111 torchaudio==0.8.0 -f https://download.pytorch.org/whl/torch_stable.html`
