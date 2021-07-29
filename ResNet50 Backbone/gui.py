@@ -519,13 +519,24 @@ class ButtonFrame(tk.Frame):
     
     # Callback handling reset
     def do_reset(self):
+        # Release the capture object
         self.VideoWidget.V.stop()
+
+        # Destory the current application window
         self.master.destroy()
-        setup(model=self.model)
+
+        # Initialize Siamese Network
+        model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+
+        # Start a new application window
+        setup(model=model)
     
     # Callback handling quit
     def do_quit(self):
+        # Release the capture object
         self.VideoWidget.V.stop()
+
+        # Destoy the root window; also destroys the application window.
         self.master.master.destroy()
 
 # ******************************************************************************************************************** #
@@ -539,7 +550,7 @@ class Application():
         VideoWidget.start()
         ImageWidget = ImageFrame(master, imgfilepath=imgfilepath)
         ImageWidget.pack(side="right")
-        ButtonWidget = ButtonFrame(master, VideoWidget=VideoWidget, ImageWidget=ImageWidget, model=model, part_name=part_name, adderstate=adderstate)
+        ButtonWidget = ButtonFrame(master, VideoWidget=VideoWidget, ImageWidget=ImageWidget, part_name=part_name, adderstate=adderstate)
         ButtonWidget.pack(side="bottom")
 
 # ******************************************************************************************************************** #
