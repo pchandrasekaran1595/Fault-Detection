@@ -54,7 +54,7 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=
 
     # Prediction > Upper Bound                 -----> Match
     # Lower Bound <= Prediction <= Upper Bound -----> Possible Match
-    # Prediction < Lower Bound              
+    # Prediction < Lower Bound                 -----> Defective        
     if show_prob:
         if y_pred >= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Match, {:.5f}".format(y_pred), org=(25, 75),

@@ -4,7 +4,7 @@
 
 - Feature Extraction is performed as part of the data preprocessing pipeline using one of many pretrained models. End model used for training is merely a Multi-Layered Perceptron. This method is used so that the illusion of Siamese Architecture can be given without needing to run the data through the entire Deep Network every epoch.
 
-- Architecture of MLP used is [input_layer --> embed_layer --> output]
+- Architecture of MLP used is [input_layer --> embed_layer --> output
     1. input_layer - Size of the feature vector obtained from the pretrained network.
     2. embed_layer - New size of the feature embeddings. Can be provided by user via the command line.
     3. output      - Single neuron which after passing through a sigmoid gives a percent prediction / similarity score.
