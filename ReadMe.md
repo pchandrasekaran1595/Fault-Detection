@@ -35,12 +35,6 @@
 
 ---
 
-![Training Phase Architecture]("https://github.com/123prashanth123/Fault-Detection/tree/Test/Images/Training.png")
-
-![Validation Phase Architecture]("https://github.com/123prashanth123/Fault-Detection/tree/Test/Images/Validation.png")
-
----
-
 To install the application's development version of Pytorch, use:
 
 - `pip install torch==1.8.0+cu111 torchvision==0.9.0+cu111 torchaudio==0.8.0 -f https://download.pytorch.org/whl/torch_stable.html`
