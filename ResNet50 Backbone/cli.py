@@ -19,7 +19,6 @@ def app():
     args_2 = "--embed"
     args_3 = "--epochs"
     args_4 = "--id"
-
     args_5 = "--lower"
     args_6 = "--upper"
     args_7 = "--early"
@@ -33,7 +32,6 @@ def app():
         u.epochs = int(sys.argv[sys.argv.index(args_3) + 1])
     if args_4 in sys.argv:
         u.device_id = int(sys.argv[sys.argv.index(args_4) + 1])
-    
     if args_5 in sys.argv:
         u.lower_bound_confidence = float(sys.argv[sys.argv.index(args_5) + 1])
     if args_6 in sys.argv:

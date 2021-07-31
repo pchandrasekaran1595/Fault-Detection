@@ -11,6 +11,7 @@
     - embed_layer - New size of the feature embeddings. Can be provided by user via the command line.
     - output      - Single neuron which after passing through a sigmoid gives a percent prediction / similarity score.
 
+
 4. Operations taking place during an application run:
     - Capture of an image from video a feed at the discretion of the user. An Object Detector is used to extract the approximate bounding box of the component within the frame. This bounding box is used in the Realtime Application to set a predefined area within the frame where the object can be placed. (Bounding Box Detection is not applicable for Real World Positive and Negative Base Samples and Dumb to Intelligent)
     - Creation of the Feature Vector Dataset.
@@ -27,6 +28,7 @@
         - Device ID of capture Device (Default: 0)
         - Early Stopping Epoch (Default: 50)
 
+
 5. Realtime Application of the designed network.
     - Extract features of every frame.
     - Pass these features into the trained MLP to obtain a prediction.
@@ -38,3 +40,23 @@
 To install the application's development version of Pytorch, use:
 
 - `pip install torch==1.8.0+cu111 torchvision==0.9.0+cu111 torchaudio==0.8.0 -f https://download.pytorch.org/whl/torch_stable.html`
+
+---
+
+## CLI Arguments
+
+<pre>
+1. --num-samples - Number of Samples to be created for each class in the Dataset
+
+2. --embed       - Size of the new Embeddings
+
+3. --epochs      - Number opf training epochs
+
+4. --id          - Device ID of the capture device
+
+5. --lower       - Lower Confidence Bound of the System
+
+6. --upper       - Lower Confidence Bound of the System
+
+7. --early       - Number of epochs to wait after stagnated validation metrics before stopping the training
+</pre>

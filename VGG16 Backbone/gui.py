@@ -560,7 +560,7 @@ class Application():
 # ******************************************************************************************************************** #
 
 # Top level window setup and Application start
-def setup(part_name=None, model=None, imgfilepath=None, adderstate=False, isResult=False):
+def setup(device_id=None, part_name=None, model=None, imgfilepath=None, adderstate=False, isResult=False):
     # Setup a toplevel window
     window = tk.Toplevel()
     window.title("Application")
@@ -570,7 +570,7 @@ def setup(part_name=None, model=None, imgfilepath=None, adderstate=False, isResu
     w_canvas.place(x=0, y=0)
 
     # Initialize Application Wrapper
-    Application(window, V=Video(id=u.device_id, width=u.CAM_WIDTH, height=u.CAM_HEIGHT, fps=u.FPS), 
+    Application(window, V=Video(id=device_id, width=u.CAM_WIDTH, height=u.CAM_HEIGHT, fps=u.FPS), 
                 part_name=part_name, model=model, imgfilepath=imgfilepath, adderstate=adderstate, isResult=isResult)
 
 
@@ -581,9 +581,10 @@ def app():
     args_1 = "--num-samples"
     args_2 = "--embed"
     args_3 = "--epochs"
-    args_4 = "--lower"
-    args_5 = "--upper"
-    args_6 = "--early"
+    args_4 = "--id"
+    args_5 = "--lower"
+    args_6 = "--upper"
+    args_7 = "--early"
 
     # CLI Argument Handling
     if args_1 in sys.argv:
@@ -593,11 +594,13 @@ def app():
     if args_3 in sys.argv:
         u.epochs = int(sys.argv[sys.argv.index(args_3) + 1])
     if args_4 in sys.argv:
-        u.lower_bound_confidence = float(sys.argv[sys.argv.index(args_4) + 1])        
+        u.device_id = int(sys.argv[sys.argv.index(args_4) + 1])
     if args_5 in sys.argv:
-        u.upper_bound_confidence = float(sys.argv[sys.argv.index(args_5) + 1]) 
+        u.lower_bound_confidence = float(sys.argv[sys.argv.index(args_5) + 1])
     if args_6 in sys.argv:
-        u.early_stopping_step = int(sys.argv[sys.argv.index(args_6) + 1]) 
+        u.upper_bound_confidence = float(sys.argv[sys.argv.index(args_6) + 1])
+    if args_7 in sys.argv:
+        u.early_stopping_step = int(sys.argv[sys.argv.index(args_7) + 1])
 
     # Root Window Setup
     root = tk.Tk()
@@ -610,7 +613,7 @@ def app():
     model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
 
     # Start a new application window
-    setup(model=model)
+    setup(device_id=u.device_id, model=model)
     
     # Start
     root.mainloop()
