@@ -214,7 +214,7 @@ class VideoFrame(tk.Frame):
                 # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
                 frame = u.clahe_equ(frame)
 
-                # Process frame in during inference
+                # Process frame for inference output
                 frame = __help__(frame=frame, model=self.model, anchor=None,
                                  show_prob=True, fea_extractor=Models.fea_extractor)
 

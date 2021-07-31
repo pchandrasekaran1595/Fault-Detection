@@ -25,7 +25,7 @@ def __help__(frame=None, model=None, fea_extractor=None, show_prob=True, pt1=Non
     disp_frame = frame.copy()
 
     # Resize + Center Crop (256x256 ---> 224x224)
-    frame = u.preprocess(frame, change_color_space=False)
+    frame = u.preprocess(frame, change_color_space=True)
 
     # Perform Inference on current frame
     with torch.no_grad():

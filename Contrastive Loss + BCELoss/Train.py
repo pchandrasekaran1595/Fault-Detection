@@ -131,6 +131,8 @@ def fit_(model=None, optimizer=None, scheduler=None, epochs=None, early_stopping
             # Track the per epoch training/validation loss and accuracy
             epochLoss[phase] = np.mean(np.array(lossPerPass))
             epochAccs[phase] = np.mean(np.array(accsPerPass))
+        
+        # Store the Loss and Accuracy History
         Losses.append(epochLoss)
         Accuracies.append(epochAccs)
 
