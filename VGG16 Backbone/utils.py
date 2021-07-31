@@ -41,7 +41,7 @@ CLI_GREEN  = (0, 255, 0)
 
 # ****************************************** Default CLI Arguments *************************************************** #
 embed_layer_size = 2048
-num_samples = 1000
+num_samples = 2500
 epochs = 1000
 lower_bound_confidence = 0.95
 upper_bound_confidence = 0.99

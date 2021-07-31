@@ -57,8 +57,8 @@ class SiameseDS(Dataset):
                 self.pX = np.concatenate((self.anchor, np.expand_dims(self.p_vector[:min_val], axis=1)), axis=1)
                 self.nX = np.concatenate((self.anchor, np.expand_dims(self.n_vector[:min_val], axis=1)), axis=1)
 
-                # print(self.pX.shape)
-                # print(self.nX.shape)
+                # print("Positive FV : {}".format(self.pX.shape))
+                # print("Negative FV : {}".format(self.nX.shape))
 
                 # Generate Labels 
                 self.py = np.ones((self.pX.shape[0], 1))
@@ -88,8 +88,8 @@ class SiameseDS(Dataset):
                 self.pX = np.concatenate((self.anchor, np.expand_dims(self.p_vector, axis=1)), axis=1)
                 self.nX = np.concatenate((self.anchor, np.expand_dims(self.n_vector, axis=1)), axis=1)
 
-                # print(self.pX.shape)
-                # print(self.nX.shape)
+                # print("Positive FV : {}".format(self.pX.shape))
+                # print("Negative FV : {}".format(self.nX.shape))
                 
                 # Generate Labels 
                 self.py = np.ones((self.pX.shape[0], 1))
@@ -107,8 +107,8 @@ class SiameseDS(Dataset):
             self.fullX = self.fullX[1:]
             self.fully = self.fully[1:]
 
-        # print(self.fullX.shape)
-        # print(self.fully.shape)
+        print("Complete FV     : {}".format(self.fullX.shape))
+        print("Complete Labels : {}".format(self.fully.shape))
 
     def __len__(self):
         return self.fullX.shape[0]

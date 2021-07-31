@@ -15,7 +15,7 @@ import utils as u
 def capture_snapshot(device_id=0, part_name=None, roi_extractor=None):
     path = os.path.join(os.path.join(u.DATASET_PATH, part_name), "Positive")
 
-    # Setup Dataset Directory and Open .txt file to hold refernce bounding box coordinates
+    # Setup Dataset Directory and Open .txt file to hold reference bounding box coordinates
     if not os.path.exists(path):
         os.makedirs(path)
         file = open(os.path.join(os.path.join(u.DATASET_PATH, part_name), "Box.txt"), "w")
@@ -58,8 +58,13 @@ def capture_snapshot(device_id=0, part_name=None, roi_extractor=None):
         # Press 'c' to Capture frame
         if cv2.waitKey(u.DELAY) == ord("c"):
             print("")
+
+            # Captures Frame and save as a PNG file
             cv2.imwrite(os.path.join(path, "Snapshot_{}.png".format(count)), frame)
+
+            # Save a reference to the bounding box coordinates in a .txt file
             file.write(repr(x1) + "," + repr(y1) + "," +repr(x2) + "," + repr(y2))
+
             print("Captured Snapshot - {}".format(count))
             count += 1
 

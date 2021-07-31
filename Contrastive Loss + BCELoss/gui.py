@@ -29,6 +29,15 @@ screen_resolution = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.use
 
 # Inference Helper
 def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=None, fea_extractor=None):
+    """
+        frame         : Current frame being processed
+        anchor        : Anchor Image
+        model         : Siamese Network Model
+        show_prob     : Flag to control whether to display the similarity score
+        pt1           : Start Point of the Reference Bounding Box
+        pt2           : End Point of the Reference Bounding Box
+        fea_extractor : Feature Extraction Model
+    """
     disp_frame = frame.copy()
 
     # Alpha Blend Anchor Image if it is passed
@@ -45,7 +54,7 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=
 
     # Prediction > Upper Bound                 -----> Match
     # Lower Bound <= Prediction <= Upper Bound -----> Possible Match
-    # Prediction < Lower Bound              
+    # Prediction < Lower Bound                 -----> Defective        
     if show_prob:
         if y_pred >= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Match, {:.5f}".format(y_pred), org=(25, 75),
@@ -64,7 +73,7 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=
                               pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
                               color=u.GUI_ORANGE, thickness=2)
         else:
-            cv2.putText(img=disp_frame, text="No Match, {:.5f}".format(y_pred), org=(25, 75),
+            cv2.putText(img=disp_frame, text="Defective, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_RED, thickness=2)
             if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
@@ -98,7 +107,7 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=
                               pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
                               color=u.GUI_RED, thickness=2)
             else:
-                cv2.putText(img=disp_frame, text="No Match", org=(25, 75),
+                cv2.putText(img=disp_frame, text="Defective", org=(25, 75),
                             fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                             color=u.GUI_RED, thickness=2)
     return disp_frame
@@ -219,7 +228,7 @@ class VideoFrame(tk.Frame):
                 # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
                 frame = u.clahe_equ(frame)
 
-                # Process frame in during inference
+                # Process frame for inference output
                 frame = __help__(frame=frame, model=self.model, anchor=None, 
                                  pt1=(self.data[0], self.data[1]), pt2=(self.data[2], self.data[3]),
                                  show_prob=False, fea_extractor=Models.fea_extractor)
@@ -270,7 +279,7 @@ class ImageFrame(tk.Frame):
 
 # tkinter Button Handling
 class ButtonFrame(tk.Frame):
-    def __init__(self, master, VideoWidget=None, ImageWidget=None, model=None, part_name=None, adderstate=False, *args, **kwargs):
+    def __init__(self, master, VideoWidget=None, ImageWidget=None, part_name=None, adderstate=False, *args, **kwargs):
         tk.Frame.__init__(self, master, width=150, background="#2C40D1", *args, **kwargs)
 
         self.master = master
@@ -278,7 +287,6 @@ class ButtonFrame(tk.Frame):
         self.ImageWidget = ImageWidget
         self.widget_height = 3
         self.widget_width = 25
-        self.mdoel = model
 
         self.part_name = part_name
         if self.part_name:
@@ -301,7 +309,6 @@ class ButtonFrame(tk.Frame):
             self.buttonState = "normal"
         else:
             self.buttonState = "disabled"
-        self.model = model
 
         # Label Widget
         self.label = tk.Label(self, text="Component/Part Name", 
@@ -408,12 +415,17 @@ class ButtonFrame(tk.Frame):
         u.breaker()
         u.myprint("Generating Feature Vector Data ...", "green")
         start_time = time()
-        make_data(part_name=self.part_name, cls="Positive", num_samples=u.num_samples, fea_extractor=Models.fea_extractor, roi_extractor=Models.roi_extractor)
-        make_data(part_name=self.part_name, cls="Negative", num_samples=u.num_samples, fea_extractor=Models.fea_extractor, roi_extractor=Models.roi_extractor)
+        make_data(part_name=self.part_name, cls="Positive", num_samples=u.num_samples, 
+                  fea_extractor=Models.fea_extractor, roi_extractor=Models.roi_extractor)
+        make_data(part_name=self.part_name, cls="Negative", num_samples=u.num_samples, 
+                  fea_extractor=Models.fea_extractor, roi_extractor=Models.roi_extractor)
         u.myprint("\nTime Taken [{}] : {:.2f} minutes".format(2*u.num_samples, (time()-start_time)/60), "green")
 
+        # Initialize Siamese Network
+        model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+
         # Train the Model
-        trainer(part_name=self.part_name, model=self.model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
+        trainer(part_name=self.part_name, model=model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
 
         # Maximize the application window
         self.master.state("zoomed")
@@ -422,7 +434,9 @@ class ButtonFrame(tk.Frame):
         self.master.destroy()
 
         # Start a new application window
-        setup(part_name=self.part_name, model=self.model, imgfilepath=os.path.join(self.path, "Snapshot_1.png"), adderstate=True, isResult=True)
+        setup(device_id=u.device_id, part_name=self.part_name, model=model, 
+              imgfilepath=os.path.join(self.path, "Snapshot_1.png"), adderstate=True, 
+              isResult=True)
 
     # Callback handling the Training
     def do_train(self):
@@ -441,12 +455,18 @@ class ButtonFrame(tk.Frame):
             # Generate the Feature Vector Dataset
             u.myprint("Generating Feature Vector Data ...", "green")
             start_time = time()
-            make_data(part_name=self.part_name, cls="Positive", num_samples=u.num_samples, fea_extractor=Models.fea_extractor, roi_extractor=Models.roi_extractor)
-            make_data(part_name=self.part_name, cls="Negative", num_samples=u.num_samples, fea_extractor=Models.fea_extractor, roi_extractor=Models.roi_extractor)
+            make_data(part_name=self.part_name, cls="Positive", num_samples=u.num_samples, 
+                      fea_extractor=Models.fea_extractor, roi_extractor=Models.roi_extractor)
+            make_data(part_name=self.part_name, cls="Negative", num_samples=u.num_samples, 
+                      fea_extractor=Models.fea_extractor, roi_extractor=Models.roi_extractor)
             u.myprint("\nTime Taken [{}] : {:.2f} minutes".format(2*u.num_samples, (time()-start_time)/60), "green")
 
+            # Initialize Siamese Network
+            model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+
             # Train the Model
-            trainer(part_name=self.part_name, model=self.model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
+            trainer(part_name=self.part_name, model=model, epochs=u.epochs, lr=lr, wd=wd, batch_size=batch_size, 
+                    early_stopping=u.early_stopping_step, fea_extractor=Models.fea_extractor)
 
             # Start the capture object; Maximize the Application
             self.VideoWidget.start()
@@ -467,8 +487,13 @@ class ButtonFrame(tk.Frame):
             # Destroy the current application window
             self.master.destroy()
 
+            # Initialize Siamese Network
+            model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+
             # Start a new application window
-            setup(part_name=self.part_name, model=self.model, imgfilepath=os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Snapshot_1.png"), adderstate=True, isResult=True)
+            setup(device_id=u.device_id, part_name=self.part_name, model=model, 
+                  imgfilepath=os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Snapshot_1.png"), 
+                  adderstate=True, isResult=True)
         else:
             messagebox.showerror(title="Value Error", message="Enter a valid input")
             return
@@ -485,7 +510,7 @@ class ButtonFrame(tk.Frame):
             cv2.imwrite(os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Extra_{}.png".format(self.countp)), cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB))
             self.countp += 1
 
-    # Callback handling adding images to the Positive Diretory
+    # Callback handling adding images to the Negative Diretory
     def do_neg(self):
 
         # Read the current frame from the capture object
@@ -499,13 +524,24 @@ class ButtonFrame(tk.Frame):
     
     # Callback handling reset
     def do_reset(self):
+        # Release the capture object
         self.VideoWidget.V.stop()
+
+        # Destory the current application window
         self.master.destroy()
-        setup(model=self.model)
+
+        # Initialize Siamese Network
+        model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
+
+        # Start a new application window
+        setup(device_id=u.device_id, model=model)
     
     # Callback handling quit
     def do_quit(self):
+        # Release the capture object
         self.VideoWidget.V.stop()
+
+        # Destoy the root window; also destroys the application window.
         self.master.master.destroy()
 
 # ******************************************************************************************************************** #
@@ -519,13 +555,13 @@ class Application():
         VideoWidget.start()
         ImageWidget = ImageFrame(master, imgfilepath=imgfilepath)
         ImageWidget.pack(side="right")
-        ButtonWidget = ButtonFrame(master, VideoWidget=VideoWidget, ImageWidget=ImageWidget, model=model, part_name=part_name, adderstate=adderstate)
+        ButtonWidget = ButtonFrame(master, VideoWidget=VideoWidget, ImageWidget=ImageWidget, part_name=part_name, adderstate=adderstate)
         ButtonWidget.pack(side="bottom")
 
 # ******************************************************************************************************************** #
 
 # Top level window setup and Application start
-def setup(part_name=None, model=None, imgfilepath=None, adderstate=False, isResult=False):
+def setup(device_id=None, part_name=None, model=None, imgfilepath=None, adderstate=False, isResult=False):
     # Setup a toplevel window
     window = tk.Toplevel()
     window.title("Application")
@@ -535,7 +571,7 @@ def setup(part_name=None, model=None, imgfilepath=None, adderstate=False, isResu
     w_canvas.place(x=0, y=0)
 
     # Initialize Application Wrapper
-    Application(window, V=Video(id=u.device_id, width=u.CAM_WIDTH, height=u.CAM_HEIGHT, fps=u.FPS), 
+    Application(window, V=Video(id=device_id, width=u.CAM_WIDTH, height=u.CAM_HEIGHT, fps=u.FPS), 
                 part_name=part_name, model=model, imgfilepath=imgfilepath, adderstate=adderstate, isResult=isResult)
 
 
@@ -546,9 +582,10 @@ def app():
     args_1 = "--num-samples"
     args_2 = "--embed"
     args_3 = "--epochs"
-    args_4 = "--lower"
-    args_5 = "--upper"
-    args_6 = "--early"
+    args_4 = "--id"
+    args_5 = "--lower"
+    args_6 = "--upper"
+    args_7 = "--early"
 
     # CLI Argument Handling
     if args_1 in sys.argv:
@@ -558,11 +595,13 @@ def app():
     if args_3 in sys.argv:
         u.epochs = int(sys.argv[sys.argv.index(args_3) + 1])
     if args_4 in sys.argv:
-        u.lower_bound_confidence = float(sys.argv[sys.argv.index(args_4) + 1])        
+        u.device_id = int(sys.argv[sys.argv.index(args_4) + 1])
     if args_5 in sys.argv:
-        u.upper_bound_confidence = float(sys.argv[sys.argv.index(args_5) + 1]) 
+        u.lower_bound_confidence = float(sys.argv[sys.argv.index(args_5) + 1])
     if args_6 in sys.argv:
-        u.early_stopping_step = int(sys.argv[sys.argv.index(args_6) + 1]) 
+        u.upper_bound_confidence = float(sys.argv[sys.argv.index(args_6) + 1])
+    if args_7 in sys.argv:
+        u.early_stopping_step = int(sys.argv[sys.argv.index(args_7) + 1])
 
     # Root Window Setup
     root = tk.Tk()
@@ -575,7 +614,7 @@ def app():
     model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
 
     # Start a new application window
-    setup(model=model)
+    setup(device_id=u.device_id, model=model)
     
     # Start
     root.mainloop()

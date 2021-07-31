@@ -45,10 +45,10 @@ def get_augments(augment_seed=None):
 
 def make_data(part_name=None, cls="Positive", num_samples=None, batch_size=48, fea_extractor=None):
     """
-        part_name : Part name
-        cls       : Class of the image (Either Negative or Positive)
-        num_samples : Number of Samples to be included in the Dataset
-        batch_size : Batch Size used by feature extracting dataloader
+        part_name     : Part name
+        cls           : Class of the image (Either Negative or Positive)
+        num_samples   : Number of Samples to be included in the Dataset
+        batch_size    : Batch Size used by feature extracting dataloader
         fea_extractor : Feature Extraction Model
     """
 
@@ -68,7 +68,7 @@ def make_data(part_name=None, cls="Positive", num_samples=None, batch_size=48, f
     features = torch.zeros(1, u.FEATURE_VECTOR_LENGTH).to(u.DEVICE)
     for name in f_names:
 
-            # Get the augmentation pipeline
+        # Get the augmentation pipeline
         augment_seed = r.randint(0, 99)
         dataset_augment, _ = get_augments(augment_seed)
 

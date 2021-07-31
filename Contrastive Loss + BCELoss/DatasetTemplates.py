@@ -14,7 +14,7 @@ class FEDS(Dataset):
     def __init__(self, X=None, transform=None):
         """
             X : Images
-            transform : transformations to be applied to the  images
+            transform : transformations to be applied to the images
         """
         self.transform = transform
         self.X = X

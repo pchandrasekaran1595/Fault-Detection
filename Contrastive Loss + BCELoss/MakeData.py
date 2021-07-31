@@ -49,10 +49,10 @@ def get_augments(augment_seed=None):
 
 def make_data(part_name=None, cls="Positive", num_samples=None, batch_size=48, fea_extractor=None, roi_extractor=None):
     """
-        part_name : Part name
-        cls       : Class of the image (Either Negative or Positive)
-        num_samples : Number of Samples to be included in the Dataset
-        batch_size : Batch Size used by feature extracting dataloader
+        part_name     : Part name
+        cls           : Class of the image (Either Negative or Positive)
+        num_samples   : Number of Samples to be included in the Dataset
+        batch_size    : Batch Size used by feature extracting dataloader
         fea_extractor : Feature Extraction Model
         roi_extractor : RoI Extraction Model
     """
@@ -91,6 +91,14 @@ def make_data(part_name=None, cls="Positive", num_samples=None, batch_size=48, f
 
             # Obtain bounding box coordinates of the object
             x1, y1, x2, y2 = u.get_box_coordinates_make_data(roi_extractor, u.ROI_TRANSFORM, image)
+
+            # # Assertion in case x1 is not a numeric value
+            # assert(x1 is not None)
+
+            # In case detector cannot detect any object, consider the full image
+            if x1 is None:
+                x1, y1 = 0, 0
+                x2, y2 = u.SIZE, u.SIZE
 
             # In case bounding box detected is smaller than imgaug threshold
             if abs(x1 - x2) < 32:

@@ -72,7 +72,6 @@ class SiameseDS(Dataset):
             # Clean Up; remove the first element
             self.fullX = self.fullX[1:]
             self.fully = self.fully[1:]
-            print(self.fullX.shape)
         else:
             for anchor in self.anchors:
                 self.anchor = np.array([anchor for _ in range(self.p_vector.shape[0])])
@@ -100,7 +99,6 @@ class SiameseDS(Dataset):
             # Clean Up; remove the first element 
             self.fullX = self.fullX[1:]
             self.fully = self.fully[1:]
-            print(self.fullX.shape)
 
 
     def __len__(self):
