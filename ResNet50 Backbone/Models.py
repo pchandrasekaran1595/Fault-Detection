@@ -65,8 +65,8 @@ class SiameseNetwork(nn.Module):
         if x2 is not None:
             x1 = self.embedder(x1)
             x2 = self.embedder(x2)
-            x3 = self.classifier(torch.abs(x1 - x2))
-            return x1, x2, x3
+            x = self.classifier(torch.abs(x1 - x2))
+            return x
         else:
             x = self.classifier(self.embedder(x1))
             return x
