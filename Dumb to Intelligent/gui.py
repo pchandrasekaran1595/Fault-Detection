@@ -169,6 +169,8 @@ class VideoFrame(tk.Frame):
             self.model.load_state_dict(torch.load(self.model_path, map_location=u.DEVICE)["model_state_dict"])
             self.model.eval()
             self.model.to(u.DEVICE)
+
+            # Read the anchor image
             self.anchor = cv2.imread(os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Snapshot_1.png"), cv2.IMREAD_COLOR)
 
         # Setup the canvas and pack it into the frame
@@ -195,6 +197,7 @@ class VideoFrame(tk.Frame):
         ret, frame = self.V.get_frame()
 
         if not self.isResult:
+            # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
             frame = u.clahe_equ(frame)
             if ret:
                 h, w, _ = frame.shape
@@ -208,6 +211,7 @@ class VideoFrame(tk.Frame):
                 return
         else:
             if ret:
+                # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
                 frame = u.clahe_equ(frame)
 
                 # Process frame in during inference
@@ -351,6 +355,8 @@ class ButtonFrame(tk.Frame):
 
         # Read the current frame from the capture object
         ret, frame = self.VideoWidget.V.get_frame()
+
+        # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
         frame = u.clahe_equ(frame)
 
         # Save the frame and update counter
@@ -380,6 +386,8 @@ class ButtonFrame(tk.Frame):
 
         # Read the current frame from the capture object
         ret, frame = self.VideoWidget.V.get_frame()
+
+        # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
         frame = u.clahe_equ(frame)
 
         # Save the frame and update counter

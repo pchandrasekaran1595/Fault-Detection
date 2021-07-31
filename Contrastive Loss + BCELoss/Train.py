@@ -90,6 +90,7 @@ def fit_(model=None, optimizer=None, scheduler=None, epochs=None, early_stopping
         epochAccs = {"train": 0.0, "valid": 0.0}
 
         for phase in ["train", "valid"]:
+            # Setup model to work in training and validation mode
             if phase == "train":
                 model.train()
             else:
@@ -126,6 +127,8 @@ def fit_(model=None, optimizer=None, scheduler=None, epochs=None, early_stopping
                         optimizer.step()
                 lossPerPass.append(loss.item())
                 accsPerPass.append(getAccuracy(output_3, y))
+            
+            # Track the per epoch training/validation loss and accuracy
             epochLoss[phase] = np.mean(np.array(lossPerPass))
             epochAccs[phase] = np.mean(np.array(accsPerPass))
         Losses.append(epochLoss)

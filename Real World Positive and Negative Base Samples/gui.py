@@ -195,6 +195,7 @@ class VideoFrame(tk.Frame):
         ret, frame = self.V.get_frame()
 
         if not self.isResult:
+            # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
             frame = u.clahe_equ(frame)
             if ret:
                 h, w, _ = frame.shape
@@ -208,6 +209,7 @@ class VideoFrame(tk.Frame):
                 return
         else:
             if ret:
+                # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
                 frame = u.clahe_equ(frame)
 
                 # Process frame in during inference
@@ -351,6 +353,8 @@ class ButtonFrame(tk.Frame):
 
         # Read the current frame from the capture object
         ret, frame = self.VideoWidget.V.get_frame()
+
+        # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
         frame = u.clahe_equ(frame)
 
         # Save the frame and update counter
@@ -380,6 +384,8 @@ class ButtonFrame(tk.Frame):
 
         # Read the current frame from the capture object
         ret, frame = self.VideoWidget.V.get_frame()
+
+        # Apply CLAHE (2, 2) Preprocessing. May not be required once lighting issue is fixed
         frame = u.clahe_equ(frame)
 
         # Save the frame and update counter

@@ -68,7 +68,7 @@ def make_data(part_name=None, cls="Positive", num_samples=None, batch_size=48, f
     features = torch.zeros(1, u.FEATURE_VECTOR_LENGTH).to(u.DEVICE)
     for name in f_names:
 
-            # Get the augmentation pipeline
+        # Get the augmentation pipeline
         augment_seed = r.randint(0, 99)
         dataset_augment, _ = get_augments(augment_seed)
 
