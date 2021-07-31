@@ -13,7 +13,6 @@ import utils as u
 class RoIExtractor(nn.Module):
     def __init__(self):
         super(RoIExtractor, self).__init__()
-
         self.model = models.detection.fasterrcnn_mobilenet_v3_large_320_fpn(pretrained=True, progress=True)
 
     def forward(self, x):
