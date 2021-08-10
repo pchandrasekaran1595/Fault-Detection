@@ -436,7 +436,7 @@ class ButtonFrame(tk.Frame):
         self.master.destroy()
 
         # Start a new application window
-        setup(part_name=self.part_name, model=model, imgfilepath=os.path.join(self.path, "Snapshot_1.png"), adderstate=True, isResult=True)
+        setup(device_id=u.device_id, part_name=self.part_name, model=model, imgfilepath=os.path.join(self.path, "Snapshot_1.png"), adderstate=True, isResult=True)
 
     # Callback handling the Training
     def do_train(self):
@@ -488,7 +488,7 @@ class ButtonFrame(tk.Frame):
             model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
 
             # Start a new application window
-            setup(part_name=self.part_name, model=model, imgfilepath=os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Snapshot_1.png"), adderstate=True, isResult=True)
+            setup(device_id=u.device_id, part_name=self.part_name, model=model, imgfilepath=os.path.join(os.path.join(os.path.join(u.DATASET_PATH, self.part_name), "Positive"), "Snapshot_1.png"), adderstate=True, isResult=True)
         else:
             messagebox.showerror(title="Value Error", message="Enter a valid input")
             return
@@ -533,7 +533,7 @@ class ButtonFrame(tk.Frame):
         model, _, _, _ = Models.build_siamese_model(embed=u.embed_layer_size)
 
         # Start a new application window
-        setup(model=model)
+        setup(device_id=u.device_id, model=model)
     
     # Callback handling quit
     def do_quit(self):
