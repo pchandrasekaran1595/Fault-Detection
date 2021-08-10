@@ -28,7 +28,7 @@ screen_resolution = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.use
 # ******************************************************************************************************************** #
 
 # Inference Helper
-def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=None, fea_extractor=None):
+def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=None, fea_extractor=None, roi_extractor=None):
     """
         frame         : Current frame being processed
         anchor        : Anchor Image
@@ -47,6 +47,11 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=
     # Resize + Center Crop (256x256 ---> 224x224)
     frame = u.preprocess(frame, change_color_space=False)
 
+    ########## Dynamic Bounding Box during Inference ##########
+    # Obtain the bounding box coordinates
+    x1, y1, x2, y2 = u.get_box_coordinates(Models.roi_extractor, u.ROI_TRANSFORM, disp_frame)
+    ############################################################ 
+
     # Perform Inference on current frame
     with torch.no_grad():
         features = u.normalize(fea_extractor(u.FEA_TRANSFORM(frame).to(u.DEVICE).unsqueeze(dim=0)))
@@ -60,56 +65,72 @@ def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=
             cv2.putText(img=disp_frame, text="Match, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_GREEN, thickness=2)
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_GREEN, thickness=2)
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.GUI_GREEN, thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.GUI_GREEN, thickness=2)
         elif u.lower_bound_confidence <= y_pred <= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Possible Match, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_ORANGE, thickness=2)
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_ORANGE, thickness=2)
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.GUI_ORANGE, thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.GUI_ORANGE, thickness=2)
         else:
             cv2.putText(img=disp_frame, text="Defective, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.GUI_RED, thickness=2)
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_RED, thickness=2)
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.GUI_RED, thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.GUI_RED, thickness=2)
     else:
         if y_pred >= u.lower_bound_confidence:
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_GREEN, thickness=2)
-            else:
-                cv2.putText(img=disp_frame, text="Match", org=(25, 75),
-                            fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                            color=(0, 255, 0), thickness=2)
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.GUI_GREEN, thickness=2)
+            # else:
+            #     cv2.putText(img=disp_frame, text="Match", org=(25, 75),
+            #                 fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            #                 color=(0, 255, 0), thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.GUI_GREEN, thickness=2)
+            cv2.putText(img=disp_frame, text="Match", org=(25, 75),
+                        fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        color=u.GUI_GREEN, thickness=2)
             
         elif u.lower_bound_confidence <= y_pred <= u.upper_bound_confidence:
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_ORANGE, thickness=2)
-            else:
-                cv2.putText(img=disp_frame, text="Possible Match", org=(25, 75),
-                            fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                            color=u.GUI_ORANGE, thickness=2)
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.GUI_ORANGE, thickness=2)
+            # else:
+            #     cv2.putText(img=disp_frame, text="Possible Match", org=(25, 75),
+            #                 fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            #                 color=u.GUI_ORANGE, thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.GUI_ORANGE, thickness=2)
+            cv2.putText(img=disp_frame, text="Match", org=(25, 75),
+                        fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        color=u.GUI_ORANGE, thickness=2)
         
         else:
-            if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
-                cv2.rectangle(img=disp_frame, 
-                              pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                              color=u.GUI_RED, thickness=2)
-            else:
-                cv2.putText(img=disp_frame, text="Defective", org=(25, 75),
-                            fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                            color=u.GUI_RED, thickness=2)
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.GUI_RED, thickness=2)
+            # else:
+            #     cv2.putText(img=disp_frame, text="Defective", org=(25, 75),
+            #                 fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            #                 color=u.GUI_RED, thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.GUI_RED, thickness=2)
+            cv2.putText(img=disp_frame, text="Match", org=(25, 75),
+                        fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        color=u.GUI_RED, thickness=2)
+
     return disp_frame
 
 # ******************************************************************************************************************** #

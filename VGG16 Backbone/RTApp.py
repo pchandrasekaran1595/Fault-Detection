@@ -9,23 +9,34 @@ import torch
 import numpy as np
 
 import utils as u
+import Models
 
 # ******************************************************************************************************************** #
 
 # Inference Helper
-def __help__(frame=None, model=None, fea_extractor=None, show_prob=True, pt1=None, pt2=None):
+def __help__(frame=None, anchor=None, model=None, show_prob=True, pt1=None, pt2=None, fea_extractor=None, roi_extractor=None):
     """
         frame         : Current frame being processed
+        anchor        : Anchor Image
         model         : Siamese Network Model
-        fea_extractor : Feature Extraction Model
         show_prob     : Flag to control whether to display the similarity score
         pt1           : Start Point of the Reference Bounding Box
         pt2           : End Point of the Reference Bounding Box
+        fea_extractor : Feature Extraction Model
     """
     disp_frame = frame.copy()
 
+    # Alpha Blend Anchor Image if it is passed
+    if anchor is not None:
+        disp_frame = u.alpha_blend(anchor, disp_frame, 0.15)
+
     # Resize + Center Crop (256x256 ---> 224x224)
-    frame = u.preprocess(frame, change_color_space=True)
+    frame = u.preprocess(frame, change_color_space=False)
+
+    ########## Dynamic Bounding Box during Inference ##########
+    # Obtain the bounding box coordinates
+    x1, y1, x2, y2 = u.get_box_coordinates(Models.roi_extractor, u.ROI_TRANSFORM, disp_frame)
+    ############################################################ 
 
     # Perform Inference on current frame
     with torch.no_grad():
@@ -34,50 +45,84 @@ def __help__(frame=None, model=None, fea_extractor=None, show_prob=True, pt1=Non
 
     # Prediction > Upper Bound                 -----> Match
     # Lower Bound <= Prediction <= Upper Bound -----> Possible Match
-    # Prediction < Lower Bound                 -----> Defective
+    # Prediction < Lower Bound                 -----> Defective           
     if show_prob:
         if y_pred >= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Match, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.CLI_GREEN, thickness=2)
-            cv2.rectangle(img=disp_frame, 
-                          pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                          color=u.CLI_GREEN, thickness=2)
-
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.CLI_GREEN, thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.CLI_GREEN, thickness=2)
         elif u.lower_bound_confidence <= y_pred <= u.upper_bound_confidence:
             cv2.putText(img=disp_frame, text="Possible Match, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                        color=u.CLI_ORANGE, thickness=2)
-            cv2.rectangle(img=disp_frame, 
-                          pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                          color=u.CLI_ORANGE, thickness=2)
-
+                        color=u.GUI_ORANGE, thickness=2)
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.GUI_ORANGE, thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.GUI_ORANGE, thickness=2)
         else:
             cv2.putText(img=disp_frame, text="Defective, {:.5f}".format(y_pred), org=(25, 75),
                         fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         color=u.CLI_RED, thickness=2)
-            cv2.rectangle(img=disp_frame, 
-                          pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                          color=u.CLI_RED, thickness=2)
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.CLI_RED, thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.CLI_RED, thickness=2)
     else:
-        if y_pred >= u.upper_bound_confidence:
-            cv2.rectangle(img=disp_frame, 
-                          pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                          color=u.CLI_GREEN, thickness=2)
+        if y_pred >= u.lower_bound_confidence:
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.CLI_GREEN, thickness=2)
+            # else:
+            #     cv2.putText(img=disp_frame, text="Match", org=(25, 75),
+            #                 fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            #                 color=(0, 255, 0), thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.CLI_GREEN, thickness=2)
+            cv2.putText(img=disp_frame, text="Match", org=(25, 75),
+                        fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        color=u.CLI_GREEN, thickness=2)
+            
         elif u.lower_bound_confidence <= y_pred <= u.upper_bound_confidence:
-            cv2.rectangle(img=disp_frame, 
-                          pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                          color=u.CLI_ORANGE, thickness=2)
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.GUI_ORANGE, thickness=2)
+            # else:
+            #     cv2.putText(img=disp_frame, text="Possible Match", org=(25, 75),
+            #                 fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            #                 color=u.GUI_ORANGE, thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.GUI_ORANGE, thickness=2)
+            cv2.putText(img=disp_frame, text="Match", org=(25, 75),
+                        fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        color=u.GUI_ORANGE, thickness=2)
+        
         else:
-            cv2.rectangle(img=disp_frame, 
-                          pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
-                          color=u.CLI_RED, thickness=2)
+            # if pt1[0] != 'None' and pt1[1] != 'None' and pt2[0] != 'None' and pt2[1] != 'None':
+            #     cv2.rectangle(img=disp_frame, 
+            #                   pt1=(int(pt1[0]) - u.RELIEF, int(pt1[1]) - u.RELIEF), pt2=(int(pt2[0]) + u.RELIEF, int(pt2[1]) + u.RELIEF), 
+            #                   color=u.CLI_RED, thickness=2)
+            # else:
+            #     cv2.putText(img=disp_frame, text="Defective", org=(25, 75),
+            #                 fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            #                 color=u.CLI_RED, thickness=2)
+            cv2.rectangle(img=disp_frame, pt1=(x1, y1), pt2=(x2, y2), color=u.CLI_RED, thickness=2)
+            cv2.putText(img=disp_frame, text="Match", org=(25, 75),
+                        fontScale=1, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        color=u.CLI_RED, thickness=2)
+
     return disp_frame
 
 # ******************************************************************************************************************** #
 
 # Realtime Inference
-def realtime(device_id=None, part_name=None, model=None, save=False, fea_extractor=None, show_prob=False):
+def realtime(device_id=None, part_name=None, model=None, save=False, show_prob=False):
     """
         device_id     : Device ID of the capture object
         part_name     : Name of the part under inference
@@ -130,7 +175,7 @@ def realtime(device_id=None, part_name=None, model=None, save=False, fea_extract
 
         # Perform Inference
         disp_frame = __help__(frame=frame, model=model, 
-                              fea_extractor=fea_extractor,
+                              fea_extractor=Models.fea_extractor, roi_extractor=Models.roi_extractor,
                               show_prob=show_prob, pt1=(data[0], data[1]), pt2=(data[2], data[3]))
         
         # ********************************************************************* #
@@ -169,7 +214,7 @@ def realtime(device_id=None, part_name=None, model=None, save=False, fea_extract
 # ******************************************************************************************************************** #
 
 # Inference performed on video file
-def video(filename=None, part_name=None, model=None, save=False, fea_extractor=None, show_prob=True):
+def video(filename=None, part_name=None, model=None, save=False, show_prob=True):
     """
         filename      : Name of the Video File 
         part_name     : Name of the part under inference
@@ -216,8 +261,8 @@ def video(filename=None, part_name=None, model=None, save=False, fea_extractor=N
             frame = u.clahe_equ(frame)
 
             # Perform Inference
-            disp_frame = __help__(frame=frame, model=model, 
-                                  fea_extractor=fea_extractor, show_prob=show_prob, 
+            disp_frame = __help__(frame=frame, model=model, roi_extractor=Models.roi_extractor,
+                                  fea_extractor=Models.fea_extractor, show_prob=show_prob, 
                                   pt1=(data[0], data[1]), pt2=(data[2], data[3]))
             
             # ********************************************************************* #
