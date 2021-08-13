@@ -93,3 +93,13 @@ At the location where main.py/.exe exists,
 &nbsp;
 
 ---
+
+&nbsp;
+
+- To build an exe using pyinstaller, go into the directory containing `main.py` and run the command,
+
+`pyinstaller main.py --onefile --clean --distpath "./" --name Application --hidden-import=skimage.filters.rank.core_cy_3d --log-level=DEBUG`
+
+&nbsp;
+
+---
