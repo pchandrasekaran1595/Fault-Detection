@@ -261,11 +261,13 @@ def trainer(part_name=None, model=None, epochs=None, lr=None, wd=None, batch_siz
     plt.plot(x_Axis, VL, "b", label="validation Loss")
     plt.legend()
     plt.grid()
+    plt.title("Loss Graphs")
     plt.subplot(1, 2, 2)
     plt.plot(x_Axis, TA, "r", label="Training Accuracy")
     plt.plot(x_Axis, VA, "b", label="validation Accuracy")
     plt.legend()
     plt.grid()
+    plt.title("Accuracy Graphs")
 
     # Save the plots for analysis
     plt.savefig(os.path.join(os.path.join(u.DATASET_PATH, part_name), "Graphs.jpg"))
