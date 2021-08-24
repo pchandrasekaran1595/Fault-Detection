@@ -216,7 +216,7 @@ def trainer(part_name=None, model=None, epochs=None, lr=None, wd=None, batch_siz
         break
 
     # Consider all the images in the positive directory to be an anchor image (Generate Siamese Data for each image)
-    names = [name for name in os.listdir(os.path.join(os.path.join(base_path, "Positive"))) if name[-3:] == "jpg"]
+    names = [name for name in os.listdir(os.path.join(os.path.join(base_path, "Positive"))) if name[-3:] == "png"]
     anchors = []
     for name in names:
         anchors.append(u.get_single_image_features(fea_extractor, u.FEA_TRANSFORM, u.preprocess(cv2.imread(os.path.join(os.path.join(base_path, "Positive"), name), cv2.IMREAD_COLOR))))
