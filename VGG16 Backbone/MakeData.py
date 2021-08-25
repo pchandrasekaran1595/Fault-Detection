@@ -12,8 +12,6 @@ import random as r
 from imgaug import augmenters
 from torch.utils.data import DataLoader as DL
 
-import matplotlib.pyplot as plt
-
 from DatasetTemplates import FEDS
 import utils as u
 
