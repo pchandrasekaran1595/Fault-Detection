@@ -5,9 +5,11 @@
 import os
 import cv2
 import torch
+import warnings
 from torchvision import transforms, ops
 from termcolor import colored
 os.system("color")
+warnings.filterwarnings("ignore")
 
 # Self Aware Dataset Directory
 DATASET_PATH = os.path.join(os.getcwd(), "Datasets")

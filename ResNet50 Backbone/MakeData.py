@@ -117,16 +117,8 @@ def make_data(part_name=None, cls="Positive", num_samples=None, batch_size=48, f
             # Put back the RoI into the image
             image[y1:y2, x1:x2] = crp_img.squeeze()
 
-            plt.figure()
-            plt.imshow(image)
-            plt.show()
-
             # Resize image for usage with Feature Extractor
             image = cv2.resize(src=image, dsize=(u.SIZE, u.SIZE), interpolation=cv2.INTER_AREA)
-
-            plt.figure()
-            plt.imshow(image)
-            plt.show()
 
             # Augment the entire dataset using the dataset_augment pipeline
             images = np.array(dataset_augment(images=[image for _ in range(num_samples_per_image)]))
