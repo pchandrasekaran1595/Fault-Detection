@@ -5,9 +5,11 @@
 import os
 import cv2
 import torch
+import warnings
 from torchvision import transforms, ops
 from termcolor import colored
 os.system("color")
+warnings.filterwarnings("ignore")
 
 # Self Aware Dataset Directory
 DATASET_PATH = os.path.join(os.getcwd(), "Datasets")
@@ -26,6 +28,7 @@ FEA_TRANSFORM = transforms.Compose([transforms.ToTensor(), transforms.Normalize(
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 SIZE = 224
+DET_SIZE = 320
 SEED = 0
 RELIEF = 25
 FEATURE_VECTOR_LENGTH = 2048
@@ -76,6 +79,16 @@ def preprocess(image, change_color_space=True):
     cx, cy = w // 2, h // 2
     return image[cy - 112:cy + 112, cx - 112:cx + 112, :]
 
+
+# Center Crop (Resize to 366x366, then center crop the 320x320 region)
+def preprocess_320(image, change_color_space=True):
+    if change_color_space:
+        image = cv2.cvtColor(src=image, code=cv2.COLOR_BGR2RGB)
+    image = cv2.resize(src=image, dsize=(366, 366), interpolation=cv2.INTER_AREA)
+    h, w, _ = image.shape
+    cx, cy = w // 2, h // 2
+    return image[cy - 160:cy + 160, cx - 160:cx + 160, :]
+
 # ******************************************************************************************************************** #
 
 # Normalize the vector to a min-max of [0, 1]
@@ -98,18 +111,18 @@ def get_box_coordinates(model, transform, image):
 
     h, w, _ = image.shape
     temp_image = image.copy()
-    temp_image = preprocess(temp_image, change_color_space=False)
+    temp_image = preprocess_320(temp_image, change_color_space=False)
 
     with torch.no_grad():
         output = model(transform(temp_image).to(DEVICE).unsqueeze(dim=0))[0]
     cnts, scrs = output["boxes"], output["scores"]
     if len(cnts) != 0:
-        cnts = ops.clip_boxes_to_image(cnts, (SIZE, SIZE))
+        cnts = ops.clip_boxes_to_image(cnts, (DET_SIZE, DET_SIZE))
         best_index = ops.nms(cnts, scrs, 0.1)[0]
-        x1, y1, x2, y2 = int(cnts[best_index][0] * (w / SIZE)), \
-                         int(cnts[best_index][1] * (h / SIZE)), \
-                         int(cnts[best_index][2] * (w / SIZE)), \
-                         int(cnts[best_index][3] * (h / SIZE))
+        x1, y1, x2, y2 = int(cnts[best_index][0] * (w / DET_SIZE)), \
+                         int(cnts[best_index][1] * (h / DET_SIZE)), \
+                         int(cnts[best_index][2] * (w / DET_SIZE)), \
+                         int(cnts[best_index][3] * (h / DET_SIZE))
     return x1, y1, x2, y2
 
 # ******************************************************************************************************************** #
@@ -130,7 +143,7 @@ def get_box_coordinates_make_data(model, transform, image):
         output = model(transform(temp_image).to(DEVICE).unsqueeze(dim=0))[0]
     cnts, scrs = output["boxes"], output["scores"]
     if len(cnts) != 0:
-        cnts = ops.clip_boxes_to_image(cnts, (SIZE, SIZE))
+        cnts = ops.clip_boxes_to_image(cnts, (DET_SIZE, DET_SIZE))
         best_index = ops.nms(cnts, scrs, 0.1)[0]
         x1, y1, x2, y2 = int(cnts[best_index][0]), \
                          int(cnts[best_index][1]), \
